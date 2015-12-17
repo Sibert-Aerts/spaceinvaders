@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders">
+      <UniqueIdentifier>{5a4cc83e-3357-4fd3-8ed0-2d27e9bc69c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\Model">
+      <UniqueIdentifier>{9807ad34-9073-48d0-8039-13cb3385428f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\View">
+      <UniqueIdentifier>{f4844255-e2d1-4737-8e7f-fb6c7a24454e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders">
+      <UniqueIdentifier>{eb02076e-ec1d-4859-a65e-d849efb5f1a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\View">
+      <UniqueIdentifier>{31fccbde-03de-40a4-9315-5518bf064ad5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\Model">
+      <UniqueIdentifier>{61a8adc5-f7bb-4ac7-b168-3efaf3346bea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\Time">
+      <UniqueIdentifier>{ad91c01a-b043-43c0-b9ca-d596406b0dfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\Time">
+      <UniqueIdentifier>{07d0bcf6-b283-4892-97eb-e256b2cfda12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\Controller">
+      <UniqueIdentifier>{8f47b4e6-874a-449c-a298-b519903b3d4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\Game">
+      <UniqueIdentifier>{0124060d-1035-40ff-9423-e225f52b3b2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\Game">
+      <UniqueIdentifier>{a1195f8f-4b0e-486d-b730-e04434db730f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\Controller">
+      <UniqueIdentifier>{af017b1a-c93e-4858-bd16-211edbaaaa9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Space Invaders\RNG">
+      <UniqueIdentifier>{ceb8c5de-ca4b-42d4-bae4-5960d94b1b5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Space Invaders\RNG">
+      <UniqueIdentifier>{078f0d2b-c0d0-4519-bdcb-c995e6203bef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>Source Files\Space Invaders\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="view.cpp">
+      <Filter>Source Files\Space Invaders\View</Filter>
+    </ClCompile>
+    <ClCompile Include="stopwatch.cpp">
+      <Filter>Source Files\Space Invaders\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="timer.cpp">
+      <Filter>Source Files\Space Invaders\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="entity.cpp">
+      <Filter>Source Files\Space Invaders\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>Source Files\Space Invaders\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="controller.cpp">
+      <Filter>Source Files\Space Invaders\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="random.cpp">
+      <Filter>Source Files\Space Invaders\RNG</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="counter.cpp">
+      <Filter>Source Files\Space Invaders\Time</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="entity.h">
+      <Filter>Header Files\Space Invaders\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>Header Files\Space Invaders\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="view.h">
+      <Filter>Header Files\Space Invaders\View</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
+      <Filter>Header Files\Space Invaders\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="stopwatch.h">
+      <Filter>Header Files\Space Invaders\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="time.h">
+      <Filter>Header Files\Space Invaders\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>Header Files\Space Invaders\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="controller.h">
+      <Filter>Header Files\Space Invaders\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="random.h">
+      <Filter>Header Files\Space Invaders\RNG</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools.h">
+      <Filter>Header Files\Space Invaders</Filter>
+    </ClInclude>
+    <ClInclude Include="counter.h">
+      <Filter>Header Files\Space Invaders\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="payload.h">
+      <Filter>Header Files\Space Invaders\Model</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
