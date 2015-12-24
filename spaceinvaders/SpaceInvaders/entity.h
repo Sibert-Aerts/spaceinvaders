@@ -82,14 +82,14 @@ namespace SI
 		class Player : public Entity {
 		public:
 			std::string name;
+			unsigned int lives;
 			Time::BinaryRepeatTimer fireCooldown;
 
-			Player(double x, double y, std::string name) : 
-				Entity(x,y),
+			Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch) :
+				Entity(x,y,28.0f),
 				name(name),
-				fireCooldown(0.4f)
-				// TODO: shove the model's clockwatch in here, or shove this up the model
-				// (ideally the prior)
+				fireCooldown(0.4f, stopwatch),
+				lives(3)
 				{}
 
 			void speak() {
@@ -101,7 +101,7 @@ namespace SI
 
 		class Enemy : public Entity {
 		public:
-			Enemy(double x, double y, float size = 20.0f) :
+			Enemy(double x, double y, float size = 40.0f) :
 				Entity(x, y, size)
 			{}
 
@@ -111,26 +111,45 @@ namespace SI
 		class Bullet : public Entity {
 		public:
 			double xvel, yvel;
+			double xacc, yacc;
 			float size;
 
-			Bullet(double xpos, double ypos, double xvel, double yvel, float size = 5.0f) :
+			Bullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
 				Entity(xpos, ypos),
 				xvel(xvel), yvel(yvel),
+				xacc(xacc), yacc(yacc),
 				size(size)
 			{}
 
 			void tick(double dt) {
 				xpos += xvel * dt;
 				ypos += yvel * dt;
+				xvel += xacc * dt;
+				yvel += yacc * dt;
 			}
 
-			bool collide(std::shared_ptr<Enemy>& enemy) {
-				double D = sqrt(pow((xpos - enemy->xpos), 2) + pow((ypos - enemy->ypos), 2));
-				double d = D - (size + enemy->size);
+			bool collide(std::shared_ptr<Entity> e) {
+				double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
+				double d = D - (size + e->size);
 				if (d > 0)
 					return false;
 				return true;
 			}
+		};
+
+		class PlayerBullet : public Bullet {
+		public:
+			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
+				Bullet(xpos, ypos, xvel, yvel, xacc, yacc, size)
+			{}
+
+		};
+		
+		class EnemyBullet : public Bullet {
+		public:
+			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
+				Bullet(xpos, ypos, xvel, yvel, xacc, yacc, size)
+			{}
 		};
 	}
 }

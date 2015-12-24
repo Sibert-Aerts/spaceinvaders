@@ -22,9 +22,13 @@ namespace SI {
 			static std::shared_ptr<RNG> getInstance();
 
 			template< class IntType = int >
-			IntType RNG::intFromRange(IntType min, IntType max) {
+			IntType intFromRange(IntType min, IntType max) {
 				std::uniform_int_distribution<IntType> dis(min, max);
 				return dis(generator);
+			}
+
+			bool chanceOutOf(unsigned int x, unsigned int y) {
+				return intFromRange(1u, y) <= x;
 			}
 
 		};

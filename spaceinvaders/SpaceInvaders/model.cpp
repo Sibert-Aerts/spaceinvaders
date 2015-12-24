@@ -11,14 +11,17 @@ namespace SI {
 			stopwatch(std::make_shared<Time::SimStopwatch>()),
 			updateTimer(tickPeriod, stopwatch),
 			counter(stopwatch),
-			pauseTimer(0.5f)
+			pauseTimer(0.2f),
+			gameOver(false)
 		{
-			player = std::make_shared<Md::Player>(50, 500, "toeterman");
+			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
 			addEntity(player);
+			payload = std::make_shared<Payload>(&entities);
+			payload->lives = player->lives;	// TODO: shove this in the payload contstuructor
 		}
 
 		void Model::registerView(std::shared_ptr<Vw::View> view) {
-			views.push_back(view);
+			view->registerPayload(payload);
 		}
 
 		void Model::registerController(std::shared_ptr<Ctrl::Controller> controller) {
@@ -51,7 +54,7 @@ namespace SI {
 				if (auto& e = std::dynamic_pointer_cast<Enemy>(entity))
 					enemies.push_back(e);
 			}
-
+			
 				// Tick entities
 			for (auto& e : debugEntities)
 				tickDebugEntity(dt, e);
@@ -59,11 +62,16 @@ namespace SI {
 			for (auto& e : bullets)
 				tickBullet(dt, e, enemies);
 
+			for (auto& e : enemies)
+				tickEnemy(dt, e);
+
 				// Collissions
-			for (unsigned int i = 0; i < debugEntities.size() - 1; ++i) {
-				for (unsigned int j = i + 1; j < debugEntities.size(); ++j)
-					debugEntities[i]->collide(debugEntities[j]);
-			}
+			if(debugEntities.size() > 1)
+				for (unsigned int i = 0; i < debugEntities.size() - 1; ++i)
+					for (unsigned int j = i + 1; j < debugEntities.size(); ++j)
+						debugEntities[i]->collide(debugEntities[j]);
+
+			payload->secondsPassed = (unsigned int)counter.getSeconds();
 
 		}
 
@@ -74,7 +82,7 @@ namespace SI {
 
 				case Ctrl::shoot:
 					if(player->fireCooldown())
-						addEntity(std::make_shared<Md::Bullet>(player->xpos, player->ypos, 0, -400));
+						addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200));
 					break;
 
 				case Ctrl::left:
@@ -86,9 +94,10 @@ namespace SI {
 					break;
 
 				case Ctrl::pause:
-					// TODO: Implement pause or somethin'
-					if (pauseTimer())
+					if (pauseTimer()) {
 						stopwatch->pause();
+						payload->paused = true;
+					}
 					break;
 				}
 			}
@@ -112,8 +121,10 @@ namespace SI {
 					break;
 
 				case Ctrl::pause:
-					if(pauseTimer())
+					if (pauseTimer()) {
 						stopwatch->unPause();
+						payload->paused = false;
+					}
 					return;
 				}
 			}
@@ -125,7 +136,7 @@ namespace SI {
 				e->xacc = std::abs(e->xacc);
 				e->xvel = std::abs(e->xvel);
 			}
-			if (e->xpos > 800- e->size) {
+			if (e->xpos > 800 - e->size) {
 				e->xacc = -std::abs(e->xacc);
 				e->xvel = -std::abs(e->xvel);
 			}
@@ -133,7 +144,7 @@ namespace SI {
 				e->yacc = std::abs(e->yacc);
 				e->yvel = std::abs(e->yvel);
 			}
-			if (e->ypos > 600- e->size) {
+			if (e->ypos > 720 - e->size) {
 				e->yacc = -std::abs(e->yacc);
 				e->yvel = -std::abs(e->yvel);
 			}
@@ -142,21 +153,28 @@ namespace SI {
 
 		void Model::tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies){
 			e->tick(dt);
-			for (auto& enemy : enemies) {
-				if (e->collide(enemy)) {
+			if (std::dynamic_pointer_cast<PlayerBullet>(e)) {
+				for (auto& enemy : enemies) {
+					if (e->collide(enemy)) {
+						deleteEntity(e);
+						deleteEntity(enemy);
+						return;
+					}
+				}
+			} else if (std::dynamic_pointer_cast<EnemyBullet>(e)) {
+				if (e->collide(player)) {
 					deleteEntity(e);
-					deleteEntity(enemy);
+					playerHit();
 					return;
 				}
 			}
-			if (e->ypos < 0)
+			if (e->ypos < 0 || e->ypos > 720)
 				deleteEntity(e);
 		}
-
-		void Model::updateViews(double dt) {
-			for (std::shared_ptr<Vw::View> view : views) {
-				view->update(entities);
-			}
+		
+		void Model::tickEnemy(double dt, std::shared_ptr<Enemy> e) {
+			if(RNG::RNG::getInstance()->chanceOutOf(1,500))
+				addEntity(std::make_shared<Md::EnemyBullet>(e->xpos, e->ypos, 0, 300, 0, 0));
 		}
 
 		void Model::addEntity(std::shared_ptr<Entity> entity) {
@@ -167,8 +185,18 @@ namespace SI {
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
 		}
 
-		std::vector<std::shared_ptr<Entity>>& Model::getEntities(){
-			return entities;
+		void Model::playerHit(){
+			player->lives--;
+			payload->lives = player->lives;
+			if (player->lives == 0) {
+				stopwatch->pause();
+				gameOver = true;
+				payload->gameOver = true;
+			}
+		}
+
+		std::vector<std::shared_ptr<Entity>>* Model::getEntities(){
+			return &entities;
 		}
 
 	};

@@ -5,6 +5,7 @@
 #include "controller.h"
 #include "time.h"
 #include "entity.h"
+#include "payload.h"
 #include "random.h"
 
 namespace SI {
@@ -22,14 +23,16 @@ namespace SI {
 		private:
 			// Data members
 			std::shared_ptr<Ctrl::Controller> controller;
-			std::vector<std::shared_ptr<Vw::View>> views;
 			std::shared_ptr<Time::SimStopwatch> stopwatch;
 
 			std::vector<std::shared_ptr<Entity>> entities;
 			std::shared_ptr<Player> player;
+			bool gameOver;
 			Time::BinaryRepeatTimer updateTimer;
 			Time::BinaryRepeatTimer pauseTimer;
 
+			// The model's own payload
+			std::shared_ptr<Payload> payload;
 
 			Time::Counter counter;
 
@@ -56,10 +59,7 @@ namespace SI {
 		// Advance a bullet by a single step
 			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies);
 
-		// Inform the views of what the haps are
-		// TODO: Shove this further down in the entitites, each of which should update their own mirror entity
-		// or give some type of payload or something, who knows.
-			void updateViews(double dt);
+			void tickEnemy(double dt, std::shared_ptr<Enemy> e);
 
 		// Register a new entity to the simulation
 			void addEntity(std::shared_ptr<Entity> entity);
@@ -67,10 +67,13 @@ namespace SI {
 		// Delete an entity from the simulation
 			void deleteEntity(std::shared_ptr<Entity> entity);
 
+		// Hit the player
+			void playerHit();
+
 		// Get the entities like the greedy fucking View you are
 		// You can't do that! You can't touch that! The Model has to give these to you!
 		// TODO: Make obsolete
-			std::vector<std::shared_ptr<Entity>>& getEntities();
+			std::vector<std::shared_ptr<Entity>>* getEntities();
 
 		};
 

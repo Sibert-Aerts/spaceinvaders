@@ -13,7 +13,7 @@ int main()
 		
 		Game game;
 
-		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(800, 600, "Scherm", 0.001f);
+		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(800, 720, "Scherm", 0.001f);
 
 		game.registerView(view);
 
