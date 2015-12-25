@@ -4,11 +4,9 @@
 namespace SI {
 	namespace Time {
 
-		Counter::Counter(std::shared_ptr<Stopwatch> sw) {
-			if (sw)
-				stopwatch = sw;
-			else
-				stopwatch = GlobalStopwatch::getInstance();
+		Counter::Counter(std::shared_ptr<Stopwatch> sw) : 
+			stopwatch(sw)
+		{
 			start = stopwatch->now();
 		}
 
@@ -19,5 +17,17 @@ namespace SI {
 		double Counter::getSeconds() {
 			return nanoToSeconds(stopwatch->now() - start);
 		}
+
+		// PeriodCounter
+
+		PeriodCounter::PeriodCounter(double period, std::shared_ptr<Stopwatch> sw) : 
+			counter(sw), period(period)
+		{}
+
+		unsigned int PeriodCounter::getCount() {
+			return (unsigned int)(counter.getSeconds() / period);
+		}
+
+
 	}
 }

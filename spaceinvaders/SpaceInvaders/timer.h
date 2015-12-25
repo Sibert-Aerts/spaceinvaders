@@ -14,8 +14,7 @@ namespace SI {
 			unsigned long long period;
 
 		public:
-			PeriodTimer(double period);
-			PeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch);
+			PeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch = GlobalStopwatch::getInstance());
 
 			virtual void setPeriod(double period);
 
@@ -35,8 +34,7 @@ namespace SI {
 		// For when a certain action needs to happen at most once every 'period'
 		class BinaryRepeatTimer : public PeriodTimer {
 		public:
-			BinaryRepeatTimer(double period);
-			BinaryRepeatTimer(double period, std::shared_ptr<Stopwatch>);
+			BinaryRepeatTimer(double period, std::shared_ptr<Stopwatch> = GlobalStopwatch::getInstance());
 			
 			// Returns 'true' if it has been longer than 'period' since the last time it returned 'true'
 			virtual bool operator()();
@@ -51,8 +49,7 @@ namespace SI {
 		protected:
 			unsigned int periods;
 		public:
-			CountingRepeatTimer(double period);
-			CountingRepeatTimer(double period, std::shared_ptr<Stopwatch>);
+			CountingRepeatTimer(double period, std::shared_ptr<Stopwatch> = GlobalStopwatch::getInstance());
 
 			virtual void setPeriod(double period);
 			virtual void reset();
@@ -62,6 +59,15 @@ namespace SI {
 
 			// Takes up all the periods that still fit in the time since its creation, returns their count.
 			virtual unsigned int count();
+		};
+
+		// A timer that checks if it's been less than 'period' time since its creation or the last reset
+		class WithinPeriodTimer : public PeriodTimer {
+		public:
+
+			WithinPeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch = GlobalStopwatch::getInstance());
+
+			virtual bool operator()();
 		};
 	}
 }

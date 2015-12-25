@@ -9,15 +9,17 @@ namespace SI {
 
 		Model::Model(double tickPeriod) :
 			stopwatch(std::make_shared<Time::SimStopwatch>()),
-			updateTimer(tickPeriod, stopwatch),
+			updateTimer(tickPeriod),
 			counter(stopwatch),
 			pauseTimer(0.2f),
-			gameOver(false)
+			gameOver(false),
+			playerInvincTimer(5.0f, stopwatch)
 		{
 			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
-			addEntity(player);
 			payload = std::make_shared<Payload>(&entities);
-			payload->lives = player->lives;	// TODO: shove this in the payload contstuructor
+			payload->lives = player->lives;
+			addEntity(player);
+			playerSpawn();
 		}
 
 		void Model::registerView(std::shared_ptr<Vw::View> view) {
@@ -30,8 +32,6 @@ namespace SI {
 
 		void Model::tick() {
 			
-			tickPausedInput();
-
 			if (!updateTimer())	// Cancel the tick if it's too soon
 				return;
 			
@@ -41,10 +41,18 @@ namespace SI {
 				// read inputs based off dt
 			tickInput(dt);
 
-				// Separate the Entities 
+			// ____If the game is paused don't do any of the following: ________________
+			if (stopwatch->isPaused())
+				return;
+
+				// Update the payload on time-related business
+			payload->playerInvinc = playerInvincTimer();
+
+				// Separate the Entities
 			std::vector<std::shared_ptr<DebugEntity>> debugEntities;
 			std::vector<std::shared_ptr<Bullet>> bullets;
 			std::vector<std::shared_ptr<Enemy>> enemies;
+			std::vector<std::shared_ptr<Barrier>> barriers;
 			
 			for (auto entity : entities) {
 				if (auto& e = std::dynamic_pointer_cast<DebugEntity>(entity))
@@ -53,6 +61,8 @@ namespace SI {
 					bullets.push_back(e);
 				if (auto& e = std::dynamic_pointer_cast<Enemy>(entity))
 					enemies.push_back(e);
+				if (auto& e = std::dynamic_pointer_cast<Barrier>(entity))
+					barriers.push_back(e);
 			}
 			
 				// Tick entities
@@ -60,7 +70,7 @@ namespace SI {
 				tickDebugEntity(dt, e);
 
 			for (auto& e : bullets)
-				tickBullet(dt, e, enemies);
+				tickBullet(dt, e, enemies, barriers);
 
 			for (auto& e : enemies)
 				tickEnemy(dt, e);
@@ -76,56 +86,43 @@ namespace SI {
 		}
 
 		void Model::tickInput(double dt){
+			if (gameOver)
+				return;
 			std::vector<Ctrl::Input> inputs = controller->getInput();
 			for (Ctrl::Input input : inputs) {
 				switch (input){
 
 				case Ctrl::shoot:
-					if(player->fireCooldown())
-						addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200));
+					if (!stopwatch->isPaused())
+						if (player->fireCooldown()) {
+							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200));
+							payload->addEvent(friendlyShotFired);
+						}
 					break;
 
 				case Ctrl::left:
-					player->xpos -= dt * 200;
+					if (!stopwatch->isPaused() && player->xpos > 50)
+						player->xpos -= dt * player->speed;
 					break;
 
 				case Ctrl::right:
-					player->xpos += dt * 200;
+					if (!stopwatch->isPaused() && player->xpos < 750)
+						player->xpos += dt * player->speed;
 					break;
 
 				case Ctrl::pause:
 					if (pauseTimer()) {
-						stopwatch->pause();
-						payload->paused = true;
+						if (stopwatch->isPaused()) {
+							stopwatch->unPause();
+							payload->paused = false;
+							payload->addEvent(unPaused);
+						} else {
+							stopwatch->pause();
+							payload->paused = true;
+							payload->addEvent(paused);
+						}
 					}
 					break;
-				}
-			}
-		}
-
-		void Model::tickPausedInput() {
-			if (!stopwatch->isPaused())
-				return;
-
-			std::vector<Ctrl::Input> inputs = controller->getInput();
-			for (Ctrl::Input input : inputs) {
-				switch (input) {
-
-				case Ctrl::shoot:
-					break;
-
-				case Ctrl::left:
-					break;
-
-				case Ctrl::right:
-					break;
-
-				case Ctrl::pause:
-					if (pauseTimer()) {
-						stopwatch->unPause();
-						payload->paused = false;
-					}
-					return;
 				}
 			}
 		}
@@ -151,11 +148,24 @@ namespace SI {
 				
 		}
 
-		void Model::tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies){
+		void Model::tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers){
 			e->tick(dt);
+			for (auto& barrier : barriers) {
+				if (e->collide(barrier)) {
+					payload->addEvent(Event(barrierHit, e->xpos, e->ypos));
+					deleteEntity(e);
+					barrier->health--;
+					if (barrier->health == 0) {
+						deleteEntity(barrier);
+						payload->addEvent(Event(barrierDestroyed, barrier->xpos, barrier->ypos));
+					}
+				}
+			}
+
 			if (std::dynamic_pointer_cast<PlayerBullet>(e)) {
 				for (auto& enemy : enemies) {
 					if (e->collide(enemy)) {
+						payload->addEvent(Event(enemyHit, enemy->xpos, enemy->ypos));
 						deleteEntity(e);
 						deleteEntity(enemy);
 						return;
@@ -173,26 +183,45 @@ namespace SI {
 		}
 		
 		void Model::tickEnemy(double dt, std::shared_ptr<Enemy> e) {
-			if(RNG::RNG::getInstance()->chanceOutOf(1,500))
-				addEntity(std::make_shared<Md::EnemyBullet>(e->xpos, e->ypos, 0, 300, 0, 0));
+			if (RNG::RNG::getInstance()->chanceOutOf(1, 4000)) {
+				addEntity(std::make_shared<Md::EnemyBullet>(e->xpos, e->ypos, RNG::RNG::getInstance()->intFromRange(-20,20), 300, 0, 0));
+				payload->addEvent(EventType::enemyShotFired);
+			}
 		}
 
 		void Model::addEntity(std::shared_ptr<Entity> entity) {
 			entities.push_back(entity);
+			auto pe = payload->addEntity();
+			entity->registerPayloadEntity(pe);
 		}
 
 		void Model::deleteEntity(std::shared_ptr<Entity> entity){
+			payload->deleteEntity(entity->payloadEntity);
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
 		}
 
 		void Model::playerHit(){
+			payload->addEvent(Event(EventType::friendlyHit, player->xpos, player->ypos));
+			
+			// Don't do anything if the player is invincible
+			if (playerInvincTimer())
+				return;
+
 			player->lives--;
 			payload->lives = player->lives;
 			if (player->lives == 0) {
 				stopwatch->pause();
 				gameOver = true;
 				payload->gameOver = true;
+				payload->addEvent(EventType::gameOver);
 			}
+			else
+				playerSpawn();
+		}
+
+		void Model::playerSpawn() {
+			player->xpos = 400;
+			playerInvincTimer.reset();
 		}
 
 		std::vector<std::shared_ptr<Entity>>* Model::getEntities(){

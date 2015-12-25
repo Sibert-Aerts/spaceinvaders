@@ -30,6 +30,7 @@ namespace SI {
 			bool gameOver;
 			Time::BinaryRepeatTimer updateTimer;
 			Time::BinaryRepeatTimer pauseTimer;
+			Time::WithinPeriodTimer playerInvincTimer;
 
 			// The model's own payload
 			std::shared_ptr<Payload> payload;
@@ -51,13 +52,11 @@ namespace SI {
 
 		// Read and act according to the given inputs
 			void tickInput(double dt);
-		// Read and react to inputs-- while paused !
-			void tickPausedInput();
 
 		// Advance a DebugEntity by a single step
 			void tickDebugEntity(double dt, std::shared_ptr<DebugEntity> e);
 		// Advance a bullet by a single step
-			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies);
+			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers);
 
 			void tickEnemy(double dt, std::shared_ptr<Enemy> e);
 
@@ -69,6 +68,9 @@ namespace SI {
 
 		// Hit the player
 			void playerHit();
+
+		// (re-)spawn the player
+			void playerSpawn();
 
 		// Get the entities like the greedy fucking View you are
 		// You can't do that! You can't touch that! The Model has to give these to you!

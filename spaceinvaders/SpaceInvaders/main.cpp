@@ -9,18 +9,24 @@ using namespace SI;
 int main()
 {
 	try {
+
 		std::cout << "Space Invaders" << std::endl;
-		
+
+		std::cout << "creating game..." << std::endl;
 		Game game;
 
-		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(800, 720, "Scherm", 0.001f);
+		std::cout << "creating view..." << std::endl;
+		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(0.0f);
 
 		game.registerView(view);
 
+		std::cout << "running...!" << std::endl;
 		game.run();
+		std::cout << "Done!" << std::endl;
 
 	} catch (std::exception& e) {
-		std::cout << e.what();
+		std::cout << "Exception encountered!" << std::endl;
+		std::cout << e.what() << std::endl;
 		return 1;
 	}
 

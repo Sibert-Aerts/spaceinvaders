@@ -6,11 +6,6 @@ namespace SI {
 
 		// PeriodTimer
 
-		PeriodTimer::PeriodTimer(double period) :
-			period((unsigned long long)(period*1e9f)),
-			timePoint(std::chrono::high_resolution_clock::now()),
-			stopwatch(GlobalStopwatch::getInstance()) {}
-
 		PeriodTimer::PeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch) :
 			period((unsigned long long)(period*1e9f)),
 			timePoint(std::chrono::high_resolution_clock::now()),
@@ -25,13 +20,10 @@ namespace SI {
 		}
 
 		double PeriodTimer::timePassed() {
-			return nanoToSeconds(timePoint - stopwatch->now());
+			return nanoToSeconds(stopwatch->now() - timePoint);
 		}
 
 		// BinaryRepeatTimer : PeriodTimer
-
-		BinaryRepeatTimer::BinaryRepeatTimer(double period) :
-			PeriodTimer(period) {}
 
 		BinaryRepeatTimer::BinaryRepeatTimer(double period, std::shared_ptr<Stopwatch> stopwatch) :
 			PeriodTimer(period, stopwatch) {}
@@ -48,10 +40,6 @@ namespace SI {
 		}
 		
 		// CountingRepeatTimer : PeriodTimer
-
-		CountingRepeatTimer::CountingRepeatTimer(double period) :
-			PeriodTimer(period),
-			periods(0) {}
 
 		CountingRepeatTimer::CountingRepeatTimer(double period, std::shared_ptr<Stopwatch> stopwatch) :
 			PeriodTimer(period, stopwatch),
@@ -82,6 +70,14 @@ namespace SI {
 			auto diff = (((stopwatch->now() - timePoint).count()) / period) - periods;
 			periods += (unsigned int)diff;
 			return (unsigned int)diff;
+		}
+
+		// WithinPeriodTimer : PeriodTimer
+
+		WithinPeriodTimer::WithinPeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch) : PeriodTimer(period, stopwatch) {}
+
+		bool WithinPeriodTimer::operator()(){
+			return (stopwatch->now() - timePoint).count() < period;
 		}
 	}
 }

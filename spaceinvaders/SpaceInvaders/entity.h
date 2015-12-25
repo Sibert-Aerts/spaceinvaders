@@ -6,15 +6,9 @@
 namespace SI
 {
 	namespace Md {
-
-	// Helper functions:
-
-		// A function that calculates the resulting velocity of an object after collission
-		inline double elasticCollission(double v1, double m1, double v2, double m2) {
-			return (v1*(m1 - m2) + 2 * m2*v2) / (m1 + m2);
-		}
-
-
+		
+		struct PayloadEntity;
+		enum EntityType;
 
 	// Classes:
 
@@ -23,13 +17,17 @@ namespace SI
 		public:
 			double xpos, ypos;
 			float size;
+			EntityType type;
+			std::shared_ptr<PayloadEntity> payloadEntity;
 
-			Entity(double xpos = 0, double ypos = 0, float size = 10.0f) : xpos(xpos), ypos(ypos), size(size) {}
+		public:
+			Entity(EntityType type, double xpos = 0, double ypos = 0, float size = 10.0f);
 
-			// TODO: replace with actual virtual function so we can dynamic cast
-			virtual void toet() {
-				std::cout << "BASE TOET\n";
-			}
+			void registerPayloadEntity(std::shared_ptr<PayloadEntity> payloadEntity);
+
+			void updatePosition();
+
+			virtual bool collide(std::shared_ptr<Entity> e);
 
 		};
 
@@ -41,115 +39,70 @@ namespace SI
 			double xacc, yacc;
 			float size;
 
-			DebugEntity(double xpos = 0, double ypos = 0, double xvel = 0, double yvel = 0, double xacc = 0, double yacc = 0, float size = 20.0f) : 
-				Entity(xpos,ypos), 
-				xvel(xvel), yvel(yvel),
-				xacc(xacc), yacc(yacc),
-				size(size)
-				{}
+		public:
+			DebugEntity(double xpos = 0, double ypos = 0, double xvel = 0, double yvel = 0, double xacc = 0, double yacc = 0, float size = 20.0f);
 
-			void tick(double dt) {
-				xvel += (dt * xacc);
-				yvel += (dt * yacc);
-				xpos += (dt * xvel);
-				ypos += (dt * yvel);
-			}
+			virtual void tick(double dt);
 
-			bool collide(std::shared_ptr<DebugEntity>& e) {
-				double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
-				double d =  D - (size + e->size);
-				if ( d > 0 )
-					return false;
-				
-				double tempx (xvel), tempy(yvel);
-				if(xpos < e-> xpos)
-				xvel = elasticCollission(xvel, size*size, e->xvel, e->size*e->size);
-				yvel = elasticCollission(yvel, size*size, e->yvel, e->size*e->size);
-				e->xvel = elasticCollission(e->xvel, e->size*e->size, tempx, size*size);
-				e->yvel = elasticCollission(e->yvel, e->size*e->size, tempy, size*size);
-
-				// Attempt to stop them from clipping into each other
-				// But mostly just resulted in them doing weird things
-				// At least they didn't clip though.
-				xpos += d / D * (e->xpos - xpos);
-				ypos += d / D * (e->ypos - ypos);
-				return true;
-			}
+			virtual bool collide(std::shared_ptr<DebugEntity>& e);
 
 		};
 	
+
 	// An entity representing the player
 		class Player : public Entity {
 		public:
 			std::string name;
 			unsigned int lives;
 			Time::BinaryRepeatTimer fireCooldown;
+			double speed;
 
-			Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch) :
-				Entity(x,y,28.0f),
-				name(name),
-				fireCooldown(0.4f, stopwatch),
-				lives(3)
-				{}
-
-			void speak() {
-				std::cout << name << std::endl;
-			}
-
+			Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch);
 		};
 
-
+	// An enemy
 		class Enemy : public Entity {
 		public:
-			Enemy(double x, double y, float size = 40.0f) :
-				Entity(x, y, size)
-			{}
-
-
+			Enemy(double x, double y, float size = 40.0f);
 		};
 
+	// An abstract bullet
 		class Bullet : public Entity {
 		public:
 			double xvel, yvel;
 			double xacc, yacc;
 			float size;
 
-			Bullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
-				Entity(xpos, ypos),
-				xvel(xvel), yvel(yvel),
-				xacc(xacc), yacc(yacc),
-				size(size)
-			{}
 
-			void tick(double dt) {
-				xpos += xvel * dt;
-				ypos += yvel * dt;
-				xvel += xacc * dt;
-				yvel += yacc * dt;
-			}
 
-			bool collide(std::shared_ptr<Entity> e) {
-				double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
-				double d = D - (size + e->size);
-				if (d > 0)
-					return false;
-				return true;
-			}
+			Bullet(EntityType type, double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
+
+
+
+			void tick(double dt);
+
 		};
 
+	// A friendly bullet
 		class PlayerBullet : public Bullet {
 		public:
-			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
-				Bullet(xpos, ypos, xvel, yvel, xacc, yacc, size)
-			{}
+			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
 
 		};
 		
+	// An enemy bullet
 		class EnemyBullet : public Bullet {
 		public:
-			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f) :
-				Bullet(xpos, ypos, xvel, yvel, xacc, yacc, size)
-			{}
+			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
+		};
+
+	// A barrier
+		class Barrier : public Entity {
+		public:
+			unsigned int health;
+
+			Barrier(double xpos, double ypos, unsigned int health = 3u);
+
 		};
 	}
 }

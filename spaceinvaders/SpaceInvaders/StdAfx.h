@@ -23,6 +23,7 @@
 #include <exception>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 
 // TODO: reference additional headers your program requires here
