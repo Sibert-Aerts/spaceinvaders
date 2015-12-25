@@ -64,11 +64,11 @@ namespace SI
 
 			void draw(std::shared_ptr<Md::DebugEntity> e);
 			void drawSprite(sf::Sprite & sprite, double x, double y);
-			void draw(std::shared_ptr<Md::Player> e);
-			void draw(std::shared_ptr<Md::PlayerBullet> e);
-			void draw(std::shared_ptr<Md::EnemyBullet> e);
-			void draw(std::shared_ptr<Md::Enemy> e);
-			void draw(std::shared_ptr<Md::Barrier> e);
+			void drawPlayer(std::shared_ptr<Md::PayloadEntity> e);
+			void drawEnemy(std::shared_ptr<Md::PayloadEntity> e);
+			void drawPlayerBullet(std::shared_ptr<Md::PayloadEntity> e);
+			void drawEnemyBullet(std::shared_ptr<Md::PayloadEntity> e);
+			void drawBarrier(std::shared_ptr<Md::PayloadEntity> e);
 			
 			void drawText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position);
 

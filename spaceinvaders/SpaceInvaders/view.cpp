@@ -88,29 +88,25 @@ namespace SI
 			//		(TL NOTE: DAIJOBU means HUNKY-DORY)
 
 			for (std::shared_ptr<Md::PayloadEntity> e : payload->payloadEntities) {
-				if (e->type == Md::EntityType::playerBullet)
-					std::cout << e->xpos << " " << e->ypos << std::endl;
-			}
-			
-			// Draw the given entities
-			for (std::shared_ptr<Md::Entity> entity : *(payload->entities)) {
-				if (auto e = std::dynamic_pointer_cast<Md::DebugEntity>(entity)) {
-					draw(e);
-				}
-				else if (auto e = std::dynamic_pointer_cast<Md::Player>(entity)) {
-					draw(e);
-				}
-				else if (auto e = std::dynamic_pointer_cast<Md::PlayerBullet>(entity)) {
-					draw(e);
-				}
-				else if (auto e = std::dynamic_pointer_cast<Md::EnemyBullet>(entity)) {
-					draw(e);
-				}
-				else if (auto e = std::dynamic_pointer_cast<Md::Enemy>(entity)) {
-					draw(e);
-				}
-				else if (auto e = std::dynamic_pointer_cast<Md::Barrier>(entity)) {
-					draw(e);
+				switch (e->type) {
+				case Md::EntityType::player:
+					drawPlayer(e);
+					break;
+				case Md::EntityType::enemy:
+					drawEnemy(e);
+					break;
+				case Md::EntityType::playerBullet:
+					drawPlayerBullet(e);
+					break;
+				case Md::EntityType::enemyBullet:
+					drawEnemyBullet(e);
+					break;
+				case Md::EntityType::barrier:
+					drawBarrier(e);
+					break;
+				case Md::EntityType::powerup:
+					drawPlayer(e);
+
 				}
 			}
 
@@ -142,7 +138,7 @@ namespace SI
 			drawShadedText(fpsText, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4),2);
 
 			// Draw the entity count
-			std::string entityText = "Entities: " + std::to_string(payload->entities->size());
+			std::string entityText = "Entities: " + std::to_string(payload->entityCount);
 			drawShadedText(entityText, 12, sf::Color::Yellow , sf::Vector2f(4, 16), 2);
 
 			window->display();
@@ -244,35 +240,25 @@ namespace SI
 			window->draw(sprite);
 		}
 
-		void View::draw(std::shared_ptr<Md::Player> e) {
+		void View::drawPlayer(std::shared_ptr<Md::PayloadEntity> e) {
 			if(flickerCounter.getCount()%2 || !payload->playerInvinc)	// Don't draw the player if he's invincible and the flicker counter is in a certain state
 				drawSprite(resources.playerSprite, e->xpos - 40, e->ypos - 20);
-			if (drawHitboxes)
-				drawCircle(e->size, sf::Color(255, 0, 0, 128), e->xpos, e->ypos);
 		}
 
-		void View::draw(std::shared_ptr<Md::PlayerBullet> e) {
-			drawSprite(resources.playerBulletSprite, e->xpos - 20, e->ypos - 20);
-			if (drawHitboxes)
-				drawCircle(e->size, sf::Color(255, 0, 0, 128), e->xpos, e->ypos);
+		void View::drawPlayerBullet(std::shared_ptr<Md::PayloadEntity> e) {
+			drawSprite(resources.getPlayerBulletSprite(e->health), e->xpos - 20, e->ypos - 20);
 		}
 
-		void View::draw(std::shared_ptr<Md::EnemyBullet> e) {
-			drawSprite(resources.alienBulletSprite, e->xpos - 20, e->ypos - 20);
-			if (drawHitboxes)
-				drawCircle(e->size, sf::Color(255, 0, 0, 128), e->xpos, e->ypos);
+		void View::drawEnemyBullet(std::shared_ptr<Md::PayloadEntity> e) {
+			drawSprite(resources.getEnemyBulletSprite(e->health), e->xpos - 20, e->ypos - 20);
 		}
 
-		void View::draw(std::shared_ptr<Md::Enemy> e) {
-			drawSprite(resources.getAlienSprite(), e->xpos - 40, e->ypos - 20);
-			if(drawHitboxes)
-				drawCircle(e->size, sf::Color(255, 0, 0, 128), e->xpos, e->ypos);
+		void View::drawEnemy(std::shared_ptr<Md::PayloadEntity> e) {
+			drawSprite(resources.getEnemySprite(), e->xpos - 40, e->ypos - 20);
 		}
 		
-		void View::draw(std::shared_ptr<Md::Barrier> e) {
+		void View::drawBarrier(std::shared_ptr<Md::PayloadEntity> e) {
 			drawSprite(resources.getBarrierSprite(e->health), e->xpos - 20, e->ypos - 20);
-			if (drawHitboxes)
-				drawCircle(e->size, sf::Color(255, 0, 0, 128), e->xpos, e->ypos);
 		}
 
 		void View::drawText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position) {

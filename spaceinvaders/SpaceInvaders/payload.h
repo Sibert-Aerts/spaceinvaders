@@ -29,7 +29,7 @@ namespace SI {
 		struct PayloadEntity {
 			EntityType type;
 			double xpos, ypos;
-			unsigned int health;
+			int health;
 
 			PayloadEntity(){}
 		};
@@ -38,31 +38,38 @@ namespace SI {
 		// A struct representing all the data a view can know about a model
 		struct Payload {
 
-			// Updated by the internal clock
+		// ____VALUES_____________________
+
+			// Variables
 			unsigned int secondsPassed;
 			unsigned int lives;
 			bool gameOver;
 			bool playerInvinc;
-
-			// Updated by the pause functionality
 			bool paused;
+
+			// Debug variables
+			unsigned int entityCount;
 
 			// Events, a series of enum values that indicate something happened
 			std::vector<Event> events;
 
+			// PayloadEntities, each individually updated by their unique entity
+			std::vector<std::shared_ptr<PayloadEntity>> payloadEntities;
+
+		// ____METHODS_____________________
+
+			// Register an event
 			void addEvent(Event event) {
 				events.push_back(event);
 			}
 
+			// Pop all stored events
 			std::vector<Event> popEvents() {
 				std::vector<Event> out = events;
 				events.clear();
 				return out;
 			}
-
-			// PayloadEntities, each individually updated by their unique entity
-			std::vector<std::shared_ptr<PayloadEntity>> payloadEntities;
-
+			
 			// Register and hand over a new entity
 			std::shared_ptr<PayloadEntity> addEntity() {
 				auto newEntity = std::make_shared<PayloadEntity>();
@@ -75,14 +82,10 @@ namespace SI {
 				payloadEntities.erase(std::remove(payloadEntities.begin(), payloadEntities.end(), e), payloadEntities.end());
 			}
 
-			// Early: a pointer to the entity vector
-			std::vector<std::shared_ptr<Entity>>* entities;
-
-			Payload(std::vector<std::shared_ptr<Entity>>* entities) :
+			Payload() :
 				secondsPassed(0),
 				paused(false),
-				gameOver(false),
-				entities(entities)
+				gameOver(false)
 			{}
 		};
 

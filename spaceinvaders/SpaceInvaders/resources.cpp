@@ -26,49 +26,23 @@ namespace SI {
 			if (!spriteSheetTexture.loadFromFile("Assets\\sprites\\sprites.png"))
 				throw(std::runtime_error("Failed to load texture: Assets\\sprites\\sprites.png"));
 
+			loadSprite(spriteSheetTexture, playerSprite,		0, 0, 2, 1);
+			loadSprite(spriteSheetTexture, playerBulletSprite1, 2, 0, 1, 1);
+			loadSprite(spriteSheetTexture, playerBulletSprite2, 3, 0, 1, 1);
+
+			loadSprite(spriteSheetTexture, enemySprite1,		0, 1, 2, 1);
+			loadSprite(spriteSheetTexture, enemyBulletSprite1,	2, 1, 1, 1);
+			loadSprite(spriteSheetTexture, enemyBulletSprite2,	3, 1, 1, 1);
+
+			loadSprite(spriteSheetTexture, enemySprite2,		0, 2, 2, 1);
+			loadSprite(spriteSheetTexture, lifeSprite,			2, 2, 1, 1);
+			loadSprite(spriteSheetTexture, powerupSprite,		3, 2, 1, 1);
+
+			loadSprite(spriteSheetTexture, barrierSprite1,		0, 3, 1, 1);
+			loadSprite(spriteSheetTexture, barrierSprite2,		1, 3, 1, 1);
+			loadSprite(spriteSheetTexture, barrierSprite3,		2, 3, 1, 1);
+			loadSprite(spriteSheetTexture, barrierSprite4,		3, 3, 1, 1);
 			
-			// setTexture
-			playerSprite.setTexture(spriteSheetTexture);
-			playerBulletSprite.setTexture(spriteSheetTexture);
-			alienBulletSprite.setTexture(spriteSheetTexture);
-			lifeSprite.setTexture(spriteSheetTexture);
-
-			alienSprite1.setTexture(spriteSheetTexture);
-			alienSprite2.setTexture(spriteSheetTexture);
-
-			barrierSprite1.setTexture(spriteSheetTexture);
-			barrierSprite2.setTexture(spriteSheetTexture);
-			barrierSprite3.setTexture(spriteSheetTexture);
-			barrierSprite4.setTexture(spriteSheetTexture);
-
-			// setTextureRect
-			playerSprite.setTextureRect(sf::IntRect(0, 0, 16, 8));
-			playerBulletSprite.setTextureRect(sf::IntRect(16, 0, 8, 8));
-			alienBulletSprite.setTextureRect(sf::IntRect(16, 8, 8, 8));
-			lifeSprite.setTextureRect(sf::IntRect(16, 16, 8, 8));
-
-			alienSprite1.setTextureRect(sf::IntRect(0, 8, 16, 8));
-			alienSprite2.setTextureRect(sf::IntRect(0, 16, 16, 8));
-
-			barrierSprite1.setTextureRect(sf::IntRect(0, 24, 8, 8));
-			barrierSprite2.setTextureRect(sf::IntRect(8, 24, 8, 8));
-			barrierSprite3.setTextureRect(sf::IntRect(16, 24, 8, 8));
-			barrierSprite4.setTextureRect(sf::IntRect(24, 24, 8, 8));
-
-			// setScale
-			playerSprite.setScale(sf::Vector2f(5.0f, 5.0f));
-			playerBulletSprite.setScale(sf::Vector2f(5.0f, 5.0f));
-			alienBulletSprite.setScale(sf::Vector2f(5.0f, 5.0f));
-			lifeSprite.setScale(sf::Vector2f(5.0f, 5.0f));
-
-			alienSprite1.setScale(sf::Vector2f(5.0f, 5.0f));
-			alienSprite2.setScale(sf::Vector2f(5.0f, 5.0f));
-
-			barrierSprite1.setScale(sf::Vector2f(5.0f, 5.0f));
-			barrierSprite2.setScale(sf::Vector2f(5.0f, 5.0f));
-			barrierSprite3.setScale(sf::Vector2f(5.0f, 5.0f));
-			barrierSprite4.setScale(sf::Vector2f(5.0f, 5.0f));
-
 			// Load sounds
 			loadSound(playerFireSoundBuffer, playerFireSound, "Assets\\sounds\\playerShoot.wav");
 			loadSound(playerHitSoundBuffer,  playerHitSound, "Assets\\sounds\\playerHit.wav");
@@ -79,20 +53,20 @@ namespace SI {
 			loadSound(pauseSoundBuffer, pauseSound, "Assets\\sounds\\pause.wav");
 		}
 
-		sf::Sprite & Resources::getAlienSprite()
+		sf::Sprite & Resources::getEnemySprite()
 		{
 			static bool animState = true;
 			animState = animState ^ alienAnimationDelay();
 			if (animState)
-				return alienSprite1;
+				return enemySprite1;
 			else
-				return alienSprite2;
+				return enemySprite2;
 		}
 
-		sf::Sprite& Resources::getBarrierSprite(unsigned int health) {
+		sf::Sprite& Resources::getBarrierSprite(int health) {
 			switch (health) {
 			case 0:
-				throw(std::runtime_error("Attempted to draw a bad barrier."));
+				throw(std::runtime_error("Attempted to draw a dead barrier."));
 				// Todo: turn that into a bad_draw_error or something
 			case 1:
 				return barrierSprite4;
@@ -105,8 +79,41 @@ namespace SI {
 
 			}
 		}
-		
+
+		sf::Sprite & Resources::getEnemyBulletSprite(int health) {
+			switch (health) {
+			case 0:
+				throw(std::runtime_error("Attempted to draw a dead enemy bullet."));
+				// Todo: turn that into a bad_draw_error or something
+			case 1:
+				return enemyBulletSprite1;
+			default:	// 2 or more
+				return enemyBulletSprite2;
+
+			}
+		}
+
+		sf::Sprite & Resources::getPlayerBulletSprite(int health) {
+			switch (health) {
+			case 0:
+				throw(std::runtime_error("Attempted to draw a dead player bullet."));
+				// Todo: turn that into a bad_draw_error or something
+			case 1:
+				return playerBulletSprite1;
+			default:	// 2 or more
+				return playerBulletSprite2;
+
+			}
+		}
+
+
 		// Private:
+
+		void Resources::loadSprite(sf::Texture & texture, sf::Sprite & sprite, unsigned int x, unsigned int y, unsigned int w, unsigned int h){
+			sprite.setTexture(texture);
+			sprite.setTextureRect(sf::IntRect(x*8, y*8, w*8, h*8));
+			sprite.setScale(sf::Vector2f(5.0f, 5.0f));
+		}
 
 		void Resources::loadSound(sf::SoundBuffer & buffer, sf::Sound & sound, std::string file){
 

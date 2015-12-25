@@ -26,15 +26,18 @@ namespace SI {
 			std::shared_ptr<Time::SimStopwatch> stopwatch;
 
 			std::vector<std::shared_ptr<Entity>> entities;
+
 			std::shared_ptr<Player> player;
+			Time::WithinPeriodTimer playerInvincTimer;	// shove this timer into the player
+
 			bool gameOver;
 			Time::BinaryRepeatTimer updateTimer;
 			Time::BinaryRepeatTimer pauseTimer;
-			Time::WithinPeriodTimer playerInvincTimer;
 
 			// The model's own payload
 			std::shared_ptr<Payload> payload;
 
+			// The counter keeping track of how long the level has gone on for
 			Time::Counter counter;
 
 		public:

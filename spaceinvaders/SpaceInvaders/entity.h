@@ -17,17 +17,21 @@ namespace SI
 		public:
 			double xpos, ypos;
 			float size;
+			int health;
 			EntityType type;
 			std::shared_ptr<PayloadEntity> payloadEntity;
 
 		public:
-			Entity(EntityType type, double xpos = 0, double ypos = 0, float size = 10.0f);
+			Entity(EntityType type, double xpos = 0, double ypos = 0, float size = 10.0f, int health = 1);
 
-			void registerPayloadEntity(std::shared_ptr<PayloadEntity> payloadEntity);
+			virtual void registerPayloadEntity(std::shared_ptr<PayloadEntity> payloadEntity);
 
 			void updatePosition();
+			void updateHealth();
 
 			virtual bool collide(std::shared_ptr<Entity> e);
+
+			virtual bool isDead();
 
 		};
 
@@ -53,7 +57,6 @@ namespace SI
 		class Player : public Entity {
 		public:
 			std::string name;
-			unsigned int lives;
 			Time::BinaryRepeatTimer fireCooldown;
 			double speed;
 
@@ -63,7 +66,13 @@ namespace SI
 	// An enemy
 		class Enemy : public Entity {
 		public:
-			Enemy(double x, double y, float size = 40.0f);
+			Enemy(double x, double y, int health = 1);
+		};
+		
+	// A barrier
+		class Barrier : public Entity {
+		public:
+			Barrier(double xpos, double ypos, int health = 4);
 		};
 
 	// An abstract bullet
@@ -71,38 +80,29 @@ namespace SI
 		public:
 			double xvel, yvel;
 			double xacc, yacc;
-			float size;
 
-
-
-			Bullet(EntityType type, double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
-
-
-
+			Bullet(EntityType type, double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f, int health = 1);
+			
 			void tick(double dt);
+
+			void hurt(std::shared_ptr<Barrier> e);
 
 		};
 
 	// A friendly bullet
 		class PlayerBullet : public Bullet {
 		public:
-			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
+			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f, int health = 2);
 
+			void hurt(std::shared_ptr<Enemy> e);
 		};
 		
 	// An enemy bullet
 		class EnemyBullet : public Bullet {
 		public:
-			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f);
-		};
+			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f, int health = 1);
 
-	// A barrier
-		class Barrier : public Entity {
-		public:
-			unsigned int health;
-
-			Barrier(double xpos, double ypos, unsigned int health = 3u);
-
+			void hurt(std::shared_ptr<Player> e);
 		};
 	}
 }

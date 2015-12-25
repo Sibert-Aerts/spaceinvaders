@@ -16,22 +16,32 @@ namespace SI {
 			sf::Sprite backgroundSprite;
 			sf::Sprite pauseOverlaySprite;
 
-			sf::Sprite alienSprite1;
-			sf::Sprite alienSprite2;
+			sf::Sprite enemySprite1;
+			sf::Sprite enemySprite2;
+
+			sf::Sprite& getEnemySprite();
 
 			sf::Sprite barrierSprite1;
 			sf::Sprite barrierSprite2;
 			sf::Sprite barrierSprite3;
 			sf::Sprite barrierSprite4;
 
-			sf::Sprite& getAlienSprite();
+			sf::Sprite& getBarrierSprite(int health);
 
-			sf::Sprite& getBarrierSprite(unsigned int health);
+			sf::Sprite enemyBulletSprite1;
+			sf::Sprite enemyBulletSprite2;
 
-			sf::Sprite alienBulletSprite;
-			sf::Sprite playerBulletSprite;
+			sf::Sprite& getEnemyBulletSprite(int health);
+
+			sf::Sprite playerBulletSprite1;
+			sf::Sprite playerBulletSprite2;
+
+			sf::Sprite& getPlayerBulletSprite(int health);
+
 			sf::Sprite playerSprite;
 			sf::Sprite lifeSprite;
+
+			sf::Sprite powerupSprite;
 
 			Time::BinaryRepeatTimer alienAnimationDelay;
 
@@ -62,6 +72,7 @@ namespace SI {
 			sf::SoundBuffer barrierDestroySoundBuffer;
 
 			// functions
+			void loadSprite(sf::Texture& texture, sf::Sprite& sprite, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 			void loadSound(sf::SoundBuffer& buffer, sf::Sound& sound, std::string file);
 
 

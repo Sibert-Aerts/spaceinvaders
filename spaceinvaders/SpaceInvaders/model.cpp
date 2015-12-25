@@ -13,11 +13,11 @@ namespace SI {
 			counter(stopwatch),
 			pauseTimer(0.2f),
 			gameOver(false),
-			playerInvincTimer(5.0f, stopwatch)
+			playerInvincTimer(3.0f, stopwatch)
 		{
 			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
-			payload = std::make_shared<Payload>(&entities);
-			payload->lives = player->lives;
+			payload = std::make_shared<Payload>();
+			payload->lives = player->health;
 			addEntity(player);
 			playerSpawn();
 		}
@@ -95,7 +95,7 @@ namespace SI {
 				case Ctrl::shoot:
 					if (!stopwatch->isPaused())
 						if (player->fireCooldown()) {
-							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200));
+							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200, 20.0f, 1));
 							payload->addEvent(friendlyShotFired);
 						}
 					break;
@@ -103,11 +103,13 @@ namespace SI {
 				case Ctrl::left:
 					if (!stopwatch->isPaused() && player->xpos > 50)
 						player->xpos -= dt * player->speed;
+					player->updatePosition();
 					break;
 
 				case Ctrl::right:
 					if (!stopwatch->isPaused() && player->xpos < 750)
 						player->xpos += dt * player->speed;
+					player->updatePosition();
 					break;
 
 				case Ctrl::pause:
@@ -153,32 +155,30 @@ namespace SI {
 			for (auto& barrier : barriers) {
 				if (e->collide(barrier)) {
 					payload->addEvent(Event(barrierHit, e->xpos, e->ypos));
-					deleteEntity(e);
-					barrier->health--;
-					if (barrier->health == 0) {
+					e->hurt(barrier);
+					if (barrier->isDead()) {
 						deleteEntity(barrier);
 						payload->addEvent(Event(barrierDestroyed, barrier->xpos, barrier->ypos));
 					}
 				}
 			}
 
-			if (std::dynamic_pointer_cast<PlayerBullet>(e)) {
+			if (auto p = std::dynamic_pointer_cast<PlayerBullet>(e)) {
 				for (auto& enemy : enemies) {
-					if (e->collide(enemy)) {
+					if (p->collide(enemy)) {
 						payload->addEvent(Event(enemyHit, enemy->xpos, enemy->ypos));
-						deleteEntity(e);
-						deleteEntity(enemy);
-						return;
+						p->hurt(enemy);
+						if(enemy->isDead())
+							deleteEntity(enemy);
 					}
 				}
-			} else if (std::dynamic_pointer_cast<EnemyBullet>(e)) {
-				if (e->collide(player)) {
-					deleteEntity(e);
+			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
+				if (p->collide(player)) {
+					p->hurt(player);
 					playerHit();
-					return;
 				}
 			}
-			if (e->ypos < 0 || e->ypos > 720)
+			if (e->ypos < 0 || e->ypos > 720 || e->isDead())
 				deleteEntity(e);
 		}
 		
@@ -193,23 +193,25 @@ namespace SI {
 			entities.push_back(entity);
 			auto pe = payload->addEntity();
 			entity->registerPayloadEntity(pe);
+			payload->entityCount = entities.size();
 		}
 
 		void Model::deleteEntity(std::shared_ptr<Entity> entity){
 			payload->deleteEntity(entity->payloadEntity);
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+			payload->entityCount = entities.size();
 		}
 
 		void Model::playerHit(){
 			payload->addEvent(Event(EventType::friendlyHit, player->xpos, player->ypos));
 			
 			// Don't do anything if the player is invincible
-			if (playerInvincTimer())
+			if (playerInvincTimer())	// shove this timer into the player
 				return;
 
-			player->lives--;
-			payload->lives = player->lives;
-			if (player->lives == 0) {
+			player->health--;
+			payload->lives = player->health;
+			if (player->isDead()) {
 				stopwatch->pause();
 				gameOver = true;
 				payload->gameOver = true;
@@ -221,6 +223,7 @@ namespace SI {
 
 		void Model::playerSpawn() {
 			player->xpos = 400;
+			player->updatePosition();
 			playerInvincTimer.reset();
 		}
 
