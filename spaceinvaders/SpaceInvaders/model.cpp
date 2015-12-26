@@ -174,7 +174,7 @@ namespace SI {
 				}
 			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
 				if (p->collide(player)) {
-					p->hurt(player);
+					deleteEntity(e);
 					playerHit();
 				}
 			}
