@@ -54,7 +54,7 @@ namespace SI {
 		bool Entity::isDead(){
 			return health <= 0;
 		}
-
+		
 		// Player : Entity
 
 		Player::Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch) :
@@ -81,11 +81,13 @@ namespace SI {
 		}
 
 		void Bullet::hurt(std::shared_ptr<Barrier> e){
-			model->addEvent(Event(shotHit, e->xpos, e->ypos));
+			model->addEvent(Event(bulletHit, xpos, ypos));
 			model->addEvent(Event(barrierHit, e->xpos, e->ypos));
+
 			int min = std::min(health, e->health);
 			health -= min;
 			e->health -= min;
+
 			updateHealth();
 			e->updateHealth();
 			if (e->isDead()) {
@@ -101,8 +103,10 @@ namespace SI {
 		{}
 
 		void EnemyBullet::hurt(std::shared_ptr<Player> e){
+			model->addEvent(Event(bulletHit, xpos, ypos));
 			health = 0;
 			e->health -= 1;
+
 			updateHealth();
 			e->updateHealth();
 		}
@@ -114,12 +118,13 @@ namespace SI {
 		{}
 
 		void PlayerBullet::hurt(std::shared_ptr<Enemy> e){
-			model->addEvent(Event(shotHit, e->xpos, e->ypos));
+			model->addEvent(Event(bulletHit, xpos, ypos));
 			model->addEvent(Event(enemyHit, e->xpos, e->ypos));
 
 			int min = std::min(health, e->health);
 			health -= min;
 			e->health -= min;
+
 			updateHealth();
 			e->updateHealth();
 
@@ -137,13 +142,23 @@ namespace SI {
 		// Enemy : Entity
 
 		Enemy::Enemy(double x, double y, int health) :
-			Entity(EntityType::enemy, x, y, 40.0f, health) {}
+			Entity(EntityType::enemy, x, y, 35.0f, health) {}
 
 		void Enemy::tick(double dt){
 			if (RNG::RNG::getInstance()->chanceOutOf(1, 4000)) {
 				model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, RNG::RNG::getInstance()->intFromRange(-20, 20), 300, 0, 0));
 				model->addEvent(Event(EventType::enemyShotFired));
 			}
+		}
+
+		void Enemy::hurt(std::shared_ptr<Barrier> e){
+			health -= e->health/3;	// 1 if barrier is at 3 or 4 health, 0 if barrier is at 1 or 2 health
+			model->addEvent(Event(bulletHit, (e->xpos+xpos)/2, (e->ypos + ypos) / 2));	// create an explosion between the barrier and alien
+			updateHealth();
+			
+			model->deleteEntity(e);
+			model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+
 		}
 
 		// DebugEntity : Entity

@@ -76,7 +76,7 @@ namespace SI {
 				tickBullet(dt, e, enemies, barriers);
 
 			for (auto& e : enemies)
-				tickEnemy(dt, e);
+				tickEnemy(dt, e, barriers);
 
 			enemyCluster.tick(dt);
 			if (enemyCluster.lowestPoint() > 720)
@@ -169,7 +169,7 @@ namespace SI {
 				
 			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
 				if (p->hit(player)) {
-					payload->addEvent(Event(shotHit, e->xpos, e->ypos));
+					payload->addEvent(Event(bulletHit, e->xpos, e->ypos));
 					deleteEntity(e);
 					playerHit();
 				}
@@ -178,8 +178,17 @@ namespace SI {
 				deleteEntity(e);
 		}
 		
-		void Model::tickEnemy(double dt, std::shared_ptr<Enemy> e) {
+		void Model::tickEnemy(double dt, std::shared_ptr<Enemy> e, std::vector<std::shared_ptr<Barrier>> barriers) {
 			e->tick(dt);
+			for (auto& barrier : barriers) {
+				if (e->hit(barrier)) {
+					e->hurt(barrier);
+					if (e->isDead()) {
+						deleteEntity(e);
+						addEvent(Event(enemyDestroyed, e->xpos, e->ypos));
+					}
+				}
+			}
 		}
 
 		void Model::addEvent(Event& e){

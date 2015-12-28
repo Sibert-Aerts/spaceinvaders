@@ -61,7 +61,7 @@ namespace SI {
 			// Advance a bullet by a single step
 			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers);
 
-			void tickEnemy(double dt, std::shared_ptr<Enemy> e);
+			void tickEnemy(double dt, std::shared_ptr<Enemy> e, std::vector<std::shared_ptr<Barrier>> barriers);
 
 			// Register a new entity to the simulation
 			void addEvent(Event& e);

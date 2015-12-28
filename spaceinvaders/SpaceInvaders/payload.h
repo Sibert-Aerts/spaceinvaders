@@ -6,7 +6,7 @@ namespace SI {
 
 		// An enum representing a type of event
 		enum EventType {
-			friendlyShotFired, enemyShotFired, shotHit, friendlyHit, enemyHit, enemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
+			friendlyShotFired, enemyShotFired, bulletHit, friendlyHit, enemyHit, enemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
 		};
 
 		// A struct representing type of event, and possibly its location

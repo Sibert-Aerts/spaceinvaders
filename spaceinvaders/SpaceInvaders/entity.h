@@ -8,10 +8,20 @@
 namespace SI
 {
 	namespace Md {
-		
+
+		class Model;
 		struct PayloadEntity;
 		enum EntityType;
-		class Model;
+
+		class Entity;
+		class Player;
+		class Enemy;
+		class EnemyCluster;
+		class Barrier;
+		class Bullet;
+		class FriendlyBullet;
+		class EnemyBullet;
+		class Powerup;
 
 	// Classes:
 
@@ -73,10 +83,11 @@ namespace SI
 			Enemy(double x, double y, int health = 1);
 
 			void tick(double dt);
+
+			void hurt(std::shared_ptr<Barrier> e);
 		};
 		
 	// A cluster of enemies
-
 		class EnemyCluster {
 		private:
 			Model* model;

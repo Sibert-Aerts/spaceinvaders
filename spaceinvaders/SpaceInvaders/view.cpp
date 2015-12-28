@@ -128,7 +128,7 @@ namespace SI
 			// if paused, fade the screen and draw "PAUSED"
 			else if (payload->paused) {
 				window->draw(resources.pauseOverlaySprite);
-				drawShadedText("PAUSED", 80, green3, sf::Vector2f(240, 260), 5);
+				drawShadedText("PAUSED", 80, green3, sf::Vector2f(240, 260), 5, green1);
 			}
 
 			// DEBUG TEXT:
@@ -165,7 +165,7 @@ namespace SI
 				case Md::EventType::enemyShotFired:
 					resources.enemyFireSound.play();
 					break;
-				case Md::EventType::shotHit:
+				case Md::EventType::bulletHit:
 					makeParticleExplosion(e.x, e.y, 400, 4, 10, -30, green2, std::_Pi / 4);
 					break;
 				case Md::EventType::friendlyHit:
