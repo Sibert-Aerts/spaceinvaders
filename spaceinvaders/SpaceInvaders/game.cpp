@@ -15,7 +15,7 @@ namespace SI {
 		model.registerController(controller);
 
 
-		//model.addEntity(std::make_shared<Md::DebugEntity>(50,50,20,20,20,20,20));
+		// model.addEntity(std::make_shared<Md::DebugEntity>(50,50,20,20,20,20,20));
 		
 		// TODO: read this out of an xml or something
 		for (int i = 0; i < 6; ++i)

@@ -96,6 +96,9 @@
     <ClCompile Include="particle.cpp">
       <Filter>Source Files\Space Invaders\View</Filter>
     </ClCompile>
+    <ClCompile Include="payload.cpp">
+      <Filter>Source Files\Space Invaders\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entity.h">

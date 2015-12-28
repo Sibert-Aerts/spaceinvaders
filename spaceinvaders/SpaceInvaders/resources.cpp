@@ -47,10 +47,14 @@ namespace SI {
 			loadSound(playerFireSoundBuffer, playerFireSound, "Assets\\sounds\\playerShoot.wav");
 			loadSound(playerHitSoundBuffer,  playerHitSound, "Assets\\sounds\\playerHit.wav");
 			loadSound(enemyFireSoundBuffer, enemyFireSound, "Assets\\sounds\\enemyShoot.wav");
-			loadSound(enemyHitSoundBuffer, enemyHitSound, "Assets\\sounds\\enemyHit.wav");
+			loadSound(enemyHitSoundBuffer, enemyDestroyedSound, "Assets\\sounds\\enemyDestroyed.wav");
 			loadSound(barrierHitSoundBuffer, barrierHitSound, "Assets\\sounds\\barrierHit.wav");
 			loadSound(barrierDestroySoundBuffer, barrierDestroySound, "Assets\\sounds\\barrierDestroyed.wav");
 			loadSound(pauseSoundBuffer, pauseSound, "Assets\\sounds\\pause.wav");
+
+			enemyHitSound = barrierDestroySound;
+			enemyHitSound.setPitch(2.0f);
+			enemyHitSound.setVolume(75.0f);
 		}
 
 		sf::Sprite & Resources::getEnemySprite()

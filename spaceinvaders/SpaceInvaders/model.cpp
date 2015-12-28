@@ -12,9 +12,12 @@ namespace SI {
 			updateTimer(tickPeriod),
 			counter(stopwatch),
 			pauseTimer(0.2f),
-			gameOver(false),
+			gameOverState(false),
 			playerInvincTimer(3.0f, stopwatch)
 		{
+			// Initialise the static Entity variable pointing to the model:
+			Entity::model = this;
+
 			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
 			payload = std::make_shared<Payload>();
 			payload->lives = player->health;
@@ -75,6 +78,10 @@ namespace SI {
 			for (auto& e : enemies)
 				tickEnemy(dt, e);
 
+			enemyCluster.tick(dt);
+			if (enemyCluster.lowestPoint() > 720)
+				gameOver();
+
 				// Collissions
 			if(debugEntities.size() > 1)
 				for (unsigned int i = 0; i < debugEntities.size() - 1; ++i)
@@ -86,7 +93,7 @@ namespace SI {
 		}
 
 		void Model::tickInput(double dt){
-			if (gameOver)
+			if (gameOverState)
 				return;
 			std::vector<Ctrl::Input> inputs = controller->getInput();
 			for (Ctrl::Input input : inputs) {
@@ -95,7 +102,7 @@ namespace SI {
 				case Ctrl::shoot:
 					if (!stopwatch->isPaused())
 						if (player->fireCooldown()) {
-							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200, 20.0f, 1));
+							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200, 1));
 							payload->addEvent(friendlyShotFired);
 						}
 					break;
@@ -146,34 +153,23 @@ namespace SI {
 			if (e->ypos > 720 - e->size) {
 				e->yacc = -std::abs(e->yacc);
 				e->yvel = -std::abs(e->yvel);
-			}
-				
+			}				
 		}
 
 		void Model::tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers){
 			e->tick(dt);
-			for (auto& barrier : barriers) {
-				if (e->collide(barrier)) {
-					payload->addEvent(Event(barrierHit, e->xpos, e->ypos));
+			for (auto& barrier : barriers)
+				if (e->hit(barrier))
 					e->hurt(barrier);
-					if (barrier->isDead()) {
-						deleteEntity(barrier);
-						payload->addEvent(Event(barrierDestroyed, barrier->xpos, barrier->ypos));
-					}
-				}
-			}
 
 			if (auto p = std::dynamic_pointer_cast<PlayerBullet>(e)) {
-				for (auto& enemy : enemies) {
-					if (p->collide(enemy)) {
-						payload->addEvent(Event(enemyHit, enemy->xpos, enemy->ypos));
+				for (auto& enemy : enemies)
+					if (p->hit(enemy))
 						p->hurt(enemy);
-						if(enemy->isDead())
-							deleteEntity(enemy);
-					}
-				}
+				
 			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
-				if (p->collide(player)) {
+				if (p->hit(player)) {
+					payload->addEvent(Event(shotHit, e->xpos, e->ypos));
 					deleteEntity(e);
 					playerHit();
 				}
@@ -183,22 +179,33 @@ namespace SI {
 		}
 		
 		void Model::tickEnemy(double dt, std::shared_ptr<Enemy> e) {
-			if (RNG::RNG::getInstance()->chanceOutOf(1, 4000)) {
-				addEntity(std::make_shared<Md::EnemyBullet>(e->xpos, e->ypos, RNG::RNG::getInstance()->intFromRange(-20,20), 300, 0, 0));
-				payload->addEvent(EventType::enemyShotFired);
-			}
+			e->tick(dt);
+		}
+
+		void Model::addEvent(Event& e){
+			payload->addEvent(e);
 		}
 
 		void Model::addEntity(std::shared_ptr<Entity> entity) {
+
 			entities.push_back(entity);
+			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
+				enemyCluster.addEnemy(e);
+
 			auto pe = payload->addEntity();
 			entity->registerPayloadEntity(pe);
+
 			payload->entityCount = entities.size();
 		}
 
 		void Model::deleteEntity(std::shared_ptr<Entity> entity){
-			payload->deleteEntity(entity->payloadEntity);
+
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
+				enemyCluster.deleteEnemy(e);
+
+			payload->deleteEntity(entity->payloadEntity);
+
 			payload->entityCount = entities.size();
 		}
 
@@ -206,17 +213,13 @@ namespace SI {
 			payload->addEvent(Event(EventType::friendlyHit, player->xpos, player->ypos));
 			
 			// Don't do anything if the player is invincible
-			if (playerInvincTimer())	// shove this timer into the player
+			if (playerInvincTimer())
 				return;
 
 			player->health--;
 			payload->lives = player->health;
-			if (player->isDead()) {
-				stopwatch->pause();
-				gameOver = true;
-				payload->gameOver = true;
-				payload->addEvent(EventType::gameOver);
-			}
+			if (player->isDead())
+				gameOver();
 			else
 				playerSpawn();
 		}
@@ -227,8 +230,11 @@ namespace SI {
 			playerInvincTimer.reset();
 		}
 
-		std::vector<std::shared_ptr<Entity>>* Model::getEntities(){
-			return &entities;
+		void Model::gameOver() {
+			stopwatch->pause();
+			gameOverState = true;
+			payload->gameOver = true;
+			payload->addEvent(EventType::gameOver);
 		}
 
 	};

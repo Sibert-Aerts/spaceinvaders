@@ -123,7 +123,7 @@ namespace SI
 			// if game over, fade the screen and draw "GAME OVER"
 			if (payload->gameOver) {
 				window->draw(resources.pauseOverlaySprite);
-				drawShadedText("GAME OVER", 80, green2, sf::Vector2f(160, 260), 5);
+				drawShadedText("GAME OVER", 80, green2, sf::Vector2f(160, 260), 5, green1);
 			}
 			// if paused, fade the screen and draw "PAUSED"
 			else if (payload->paused) {
@@ -165,18 +165,23 @@ namespace SI
 				case Md::EventType::enemyShotFired:
 					resources.enemyFireSound.play();
 					break;
+				case Md::EventType::shotHit:
+					makeParticleExplosion(e.x, e.y, 400, 4, 10, -30, green2, std::_Pi / 4);
+					break;
 				case Md::EventType::friendlyHit:
 					resources.playerHitSound.play();
-					makeParticleExplosion(e.x, e.y,400, 16, 20, -40);
+					makeParticleExplosion(e.x, e.y, 400, 16, 20, -40);
 					break;
 				case Md::EventType::enemyHit:
 					resources.enemyHitSound.play();
+					break;
+				case Md::EventType::enemyDestroyed:
+					resources.enemyDestroyedSound.play();
 					makeParticleExplosion(e.x, e.y, 150, 16, 10, -5, green1);
 					makeParticleExplosion(e.x, e.y, 100, 8, 15, -10, green2);
 					break;
 				case Md::EventType::barrierHit:
 					resources.barrierHitSound.play();
-					makeParticleExplosion(e.x, e.y, 400, 4, 10, -30, green2, std::_Pi/4);
 					break;
 				case Md::EventType::barrierDestroyed:
 					resources.barrierDestroySound.play();
@@ -190,7 +195,7 @@ namespace SI
 					resources.pauseSound.play();
 					break;
 				case Md::EventType::gameOver:
-
+					// Play a gameOver song here or something...?
 					break;
 				}
 
@@ -272,7 +277,7 @@ namespace SI
 		}
 
 		void View::drawShadedText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position, int shadeDistance, sf::Color shadeColor){
-			drawText(text, size, shadeColor, sf::Vector2f(position.x + shadeDistance, position.y + shadeDistance));
+			drawText(text, size, shadeColor, sf::Vector2f(position.x, position.y + shadeDistance));
 			drawText(text, size, color, position);
 		}
 

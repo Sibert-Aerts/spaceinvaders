@@ -51,6 +51,7 @@ namespace SI {
 			sf::Sound pauseSound;
 			sf::Sound playerHitSound;
 			sf::Sound enemyHitSound;
+			sf::Sound enemyDestroyedSound;
 			sf::Sound barrierHitSound;
 			sf::Sound barrierDestroySound;
 

@@ -198,6 +198,7 @@
     </ClCompile>
     <ClCompile Include="model.cpp" />
     <ClCompile Include="particle.cpp" />
+    <ClCompile Include="payload.cpp" />
     <ClCompile Include="random.cpp" />
     <ClCompile Include="resources.cpp" />
     <ClCompile Include="stdafx.cpp">

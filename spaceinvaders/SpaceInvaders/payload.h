@@ -1,13 +1,12 @@
 #pragma once
 #include "StdAfx.h"
-#include "model.h"
 
 namespace SI {
 	namespace Md {
 
 		// An enum representing a type of event
 		enum EventType {
-			friendlyShotFired, enemyShotFired, friendlyHit, enemyHit, barrierHit, barrierDestroyed, paused, unPaused, gameOver
+			friendlyShotFired, enemyShotFired, shotHit, friendlyHit, enemyHit, enemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
 		};
 
 		// A struct representing type of event, and possibly its location
@@ -15,8 +14,7 @@ namespace SI {
 			double x, y;
 			EventType type;
 
-			Event(EventType type, double x = 0, double y = 0) :
-				type(type), x(x), y(y) {}
+			Event(EventType type, double x = 0, double y = 0);
 		};
 
 		// An enum representing a crude abstraction of types of entities
@@ -31,7 +29,7 @@ namespace SI {
 			double xpos, ypos;
 			int health;
 
-			PayloadEntity(){}
+			PayloadEntity();
 		};
 
 
@@ -59,34 +57,18 @@ namespace SI {
 		// ____METHODS_____________________
 
 			// Register an event
-			void addEvent(Event event) {
-				events.push_back(event);
-			}
+			void addEvent(Event event);
 
 			// Pop all stored events
-			std::vector<Event> popEvents() {
-				std::vector<Event> out = events;
-				events.clear();
-				return out;
-			}
+			std::vector<Event> popEvents();
 			
 			// Register and hand over a new entity
-			std::shared_ptr<PayloadEntity> addEntity() {
-				auto newEntity = std::make_shared<PayloadEntity>();
-				payloadEntities.push_back(newEntity);
-				return newEntity;
-			}
+			std::shared_ptr<PayloadEntity> addEntity();
 
 			// Remove an entity
-			void deleteEntity(std::shared_ptr<PayloadEntity> e ) {
-				payloadEntities.erase(std::remove(payloadEntities.begin(), payloadEntities.end(), e), payloadEntities.end());
-			}
+			void deleteEntity(std::shared_ptr<PayloadEntity> e);
 
-			Payload() :
-				secondsPassed(0),
-				paused(false),
-				gameOver(false)
-			{}
+			Payload();
 		};
 
 	}

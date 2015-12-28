@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "entity.h"
-#include "payload.h"
+#include "model.h"
 
 
 namespace SI {
@@ -15,6 +15,9 @@ namespace SI {
 		}
 
 		// Entity
+
+		// static data member:
+		Model* Entity::model;
 
 		Entity::Entity(EntityType type, double xpos, double ypos, float size, int health) :
 			type(type), xpos(xpos), ypos(ypos), size(size), health(health) {
@@ -35,10 +38,12 @@ namespace SI {
 		}
 
 		void Entity::updateHealth(){
+			if (!payloadEntity)
+				throw(std::runtime_error("Entity does not have an assosicated PayloadEntity!"));
 			payloadEntity->health = this->health;
 		}
 
-		bool Entity::collide(std::shared_ptr<Entity> e) {
+		bool Entity::hit(std::shared_ptr<Entity> e) {
 			double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
 			double d = D - (size + e->size);
 			if (d > 0)
@@ -76,17 +81,23 @@ namespace SI {
 		}
 
 		void Bullet::hurt(std::shared_ptr<Barrier> e){
+			model->addEvent(Event(shotHit, e->xpos, e->ypos));
+			model->addEvent(Event(barrierHit, e->xpos, e->ypos));
 			int min = std::min(health, e->health);
 			health -= min;
 			e->health -= min;
 			updateHealth();
 			e->updateHealth();
+			if (e->isDead()) {
+				model->deleteEntity(e);
+				model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+			}
 		}
 
 		// EnemyBullet : Bullet
 
-		EnemyBullet::EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size, int health) :
-			Bullet( EntityType::enemyBullet, xpos, ypos, xvel, yvel, xacc, yacc, size, health)
+		EnemyBullet::EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health) :
+			Bullet( EntityType::enemyBullet, xpos, ypos, xvel, yvel, xacc, yacc, (float)(5 + health * 5), health)
 		{}
 
 		void EnemyBullet::hurt(std::shared_ptr<Player> e){
@@ -98,16 +109,41 @@ namespace SI {
 
 		// PlayerBullet : Bullet
 
-		PlayerBullet::PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size, int health) :
-			Bullet( EntityType::playerBullet, xpos, ypos, xvel, yvel, xacc, yacc, size, health)
+		PlayerBullet::PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health) :
+			Bullet( EntityType::playerBullet, xpos, ypos, xvel, yvel, xacc, yacc, (float)(5 + health * 5), health)
 		{}
 
 		void PlayerBullet::hurt(std::shared_ptr<Enemy> e){
+			model->addEvent(Event(shotHit, e->xpos, e->ypos));
+			model->addEvent(Event(enemyHit, e->xpos, e->ypos));
+
 			int min = std::min(health, e->health);
 			health -= min;
 			e->health -= min;
 			updateHealth();
 			e->updateHealth();
+
+			if (e->isDead()) {
+				model->deleteEntity(e);
+				model->addEvent(Event(enemyDestroyed, e->xpos, e->ypos));
+			}
+		}
+
+		// Barrier : Entity
+
+		Barrier::Barrier(double xpos, double ypos, int health) :
+			Entity(EntityType::barrier, xpos, ypos, 20.0f, health) {}
+
+		// Enemy : Entity
+
+		Enemy::Enemy(double x, double y, int health) :
+			Entity(EntityType::enemy, x, y, 40.0f, health) {}
+
+		void Enemy::tick(double dt){
+			if (RNG::RNG::getInstance()->chanceOutOf(1, 4000)) {
+				model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, RNG::RNG::getInstance()->intFromRange(-20, 20), 300, 0, 0));
+				model->addEvent(Event(EventType::enemyShotFired));
+			}
 		}
 
 		// DebugEntity : Entity
@@ -126,7 +162,7 @@ namespace SI {
 			ypos += (dt * yvel);
 			updatePosition();
 			// Jokes below
-			payloadEntity->type = EntityType(RNG::RNG::getInstance()->intFromRange(0, 7));
+			payloadEntity->type = (EntityType)((payloadEntity->type + 1) % 8);
 		}
 
 		bool DebugEntity::collide(std::shared_ptr<DebugEntity>& e) {
@@ -150,16 +186,67 @@ namespace SI {
 			return true;
 		}
 
-		// Barrier : Entity
+		// EnemyCluster
 
-		Barrier::Barrier(double xpos, double ypos, int health) :
-			Entity(EntityType::barrier, xpos, ypos, 20.0f, health) {}
+		double EnemyCluster::rightMostPoint() {
+			double right = std::numeric_limits<double>::min();
+			for (auto& enemy : enemies)
+				right = std::max(right, enemy->xpos + enemy->size);
+			return right;
+		}
 
-		// Enemy : Entity
+		double EnemyCluster::leftMostPoint(){
+			double left = std::numeric_limits<double>::max();
+			for (auto& enemy : enemies)
+				left = std::min(left, enemy->xpos - enemy->size);
+			return left;
+		}
 
-		Enemy::Enemy(double x, double y, int health) :
-			Entity(EntityType::enemy, x, y, 40.0f, health)
-		{}
+		double EnemyCluster::lowestPoint(){
+			// Lowest actually means highest since y increases downwards
+			double low = std::numeric_limits<double>::min();
+			for (auto& enemy : enemies)
+				low = std::max(low, enemy->ypos + enemy->size);
+			return low;
+		}
 
-}
+		EnemyCluster::EnemyCluster() : 
+			xDir(true), yDistance(-1.0f){}
+
+		void EnemyCluster::addEnemy(std::shared_ptr<Enemy> enemy){
+			enemies.push_back(enemy);
+		}
+
+		void EnemyCluster::deleteEnemy(std::shared_ptr<Enemy> enemy){
+			enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
+		}
+
+		unsigned int EnemyCluster::count(){
+			return enemies.size();
+		}
+
+		void EnemyCluster::tick(double dt){
+			static unsigned int initialCount = count();
+			double vel = 20.0f + (initialCount - count()) * 6.0f;
+			double xd(0.0f), yd(0.0f);
+			if (yDistance < 0) {
+				if (( xDir && rightMostPoint() > 790) || (!xDir && leftMostPoint() < 10)) {
+					yDistance = 40.0f;
+					xDir = !xDir;
+				} else {
+					xd = (xDir ? 1 : -1) * vel * dt;
+				}
+			}
+			else {
+				yd = dt * vel;
+				yDistance -= yd;
+			}
+
+			for (auto& enemy : enemies){
+				enemy->ypos += yd;
+				enemy->xpos += xd;
+				enemy->updatePosition();
+			}
+		}
+	}
 }

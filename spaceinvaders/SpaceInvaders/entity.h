@@ -2,6 +2,8 @@
 
 #include "StdAfx.h"
 #include "Time.h"
+#include "payload.h"
+#include "random.h"
 
 namespace SI
 {
@@ -9,12 +11,15 @@ namespace SI
 		
 		struct PayloadEntity;
 		enum EntityType;
+		class Model;
 
 	// Classes:
 
 	// An abstract class for an Entity in the world
 		class Entity {
 		public:
+			static Model* model;
+
 			double xpos, ypos;
 			float size;
 			int health;
@@ -29,7 +34,7 @@ namespace SI
 			void updatePosition();
 			void updateHealth();
 
-			virtual bool collide(std::shared_ptr<Entity> e);
+			virtual bool hit(std::shared_ptr<Entity> e);
 
 			virtual bool isDead();
 
@@ -52,7 +57,6 @@ namespace SI
 
 		};
 	
-
 	// An entity representing the player
 		class Player : public Entity {
 		public:
@@ -67,8 +71,37 @@ namespace SI
 		class Enemy : public Entity {
 		public:
 			Enemy(double x, double y, int health = 1);
+
+			void tick(double dt);
 		};
 		
+	// A cluster of enemies
+
+		class EnemyCluster {
+		private:
+			Model* model;
+
+			std::vector<std::shared_ptr<Enemy>> enemies;
+
+			bool xDir;
+			double yDistance;
+
+			double rightMostPoint();
+			double leftMostPoint();
+
+		public:
+			EnemyCluster();
+
+			void addEnemy(std::shared_ptr<Enemy> enemy);
+			void deleteEnemy(std::shared_ptr<Enemy> enemy);
+
+			unsigned int count();
+			double lowestPoint();
+
+			void tick(double dt);
+
+		};
+
 	// A barrier
 		class Barrier : public Entity {
 		public:
@@ -92,7 +125,7 @@ namespace SI
 	// A friendly bullet
 		class PlayerBullet : public Bullet {
 		public:
-			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f, int health = 2);
+			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health = 2);
 
 			void hurt(std::shared_ptr<Enemy> e);
 		};
@@ -100,7 +133,7 @@ namespace SI
 	// An enemy bullet
 		class EnemyBullet : public Bullet {
 		public:
-			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size = 10.0f, int health = 1);
+			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health = 1);
 
 			void hurt(std::shared_ptr<Player> e);
 		};
