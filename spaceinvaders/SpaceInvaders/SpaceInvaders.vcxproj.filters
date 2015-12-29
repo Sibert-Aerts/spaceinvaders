@@ -99,6 +99,9 @@
     <ClCompile Include="payload.cpp">
       <Filter>Source Files\Space Invaders\Model</Filter>
     </ClCompile>
+    <ClCompile Include="level.cpp">
+      <Filter>Source Files\Space Invaders\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entity.h">
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="particle.h">
       <Filter>Header Files\Space Invaders\View</Filter>
+    </ClInclude>
+    <ClInclude Include="level.h">
+      <Filter>Header Files\Space Invaders\Model</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

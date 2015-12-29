@@ -9,7 +9,7 @@ namespace SI
 
 		// VARIABLES (TODO: READ THESE FROM AN INI OR SOMETHING)
 
-		bool drawHitboxes = false;	// Draw hitboxes or not
+		bool drawDebugText = true;	// Draw hitboxes or not
 		
 		// Helper functions
 		
@@ -75,18 +75,15 @@ namespace SI
 
 			tickParticles(dt);
 						
-		// ________DRAWING BEGINS HERE____________________
+		// ________DRAWING BEGINS HERE____________________________________
 			window->clear(sf::Color(15,15,15));
 			
+				// Game elements:
+
 			// Draw the background
 			window->draw(resources.backgroundSprite);
-
-			//TODO: REPLACE THE BOTTOM FOR-LOOP CONSTRUCTION WITH THE TOP ONE
-			// how: replace draw(e) with draw<type>(e)
-			//		the rest is easy you retard, you can (hopefully?) then remove the
-			//		goddamn entity vector pointer from the payload and all will be DAIJOBU
-			//		(TL NOTE: DAIJOBU means HUNKY-DORY)
-
+			
+			// Draw the entities
 			for (std::shared_ptr<Md::PayloadEntity> e : payload->payloadEntities) {
 				switch (e->type) {
 				case Md::EntityType::player:
@@ -110,7 +107,10 @@ namespace SI
 				}
 			}
 
+			// Draw the particles
 			drawParticles();
+
+				// HUD elements:
 
 			// Draw the lives
 			drawLives();
@@ -118,7 +118,6 @@ namespace SI
 			// Draw the timer
 			std::string timerText = "TIME: " + std::to_string(payload->secondsPassed);
 			drawShadedText(timerText, 20, green3, sf::Vector2f(680, 20), 2, green1);
-
 
 			// if game over, fade the screen and draw "GAME OVER"
 			if (payload->gameOver) {
@@ -130,19 +129,26 @@ namespace SI
 				window->draw(resources.pauseOverlaySprite);
 				drawShadedText("PAUSED", 80, green3, sf::Vector2f(240, 260), 5, green1);
 			}
+			// if level complete, fade the screen and draw "LEVEL COMPLETE"
+			else if (payload->levelComplete) {
+				window->draw(resources.pauseOverlaySprite);
+				drawShadedText("LEVEL COMPLETE", 70, green3, sf::Vector2f(70, 275), 5, green1);
+			}
 
 			// DEBUG TEXT:
-			// Draw the framerate
-			double avg = avgFps(1 / dt);
-			std::string fpsText = "FPS: " + std::to_string(avg);
-			drawShadedText(fpsText, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4),2);
+			if (drawDebugText) {
+				// Draw the framerate
+				double avg = avgFps(1 / dt);
+				std::string fpsText = "FPS: " + std::to_string(avg);
+				drawShadedText(fpsText, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4), 2);
 
-			// Draw the entity count
-			std::string entityText = "Entities: " + std::to_string(payload->entityCount);
-			drawShadedText(entityText, 12, sf::Color::Yellow , sf::Vector2f(4, 16), 2);
+				// Draw the entity count
+				std::string entityText = "Entities: " + std::to_string(payload->entityCount);
+				drawShadedText(entityText, 12, sf::Color::Yellow, sf::Vector2f(4, 16), 2);
+			}
 
 			window->display();
-		// ________DRAWING ENDS HERE______________________
+		// ________DRAWING ENDS HERE______________________________________
 		}
 
 		void View::checkWindowEvents(){
@@ -231,6 +237,8 @@ namespace SI
 		}
 
 		void View::drawLives(){
+			if (payload->lives < 0)
+				throw(std::runtime_error("Attempted to draw negative player health."));
 			for (unsigned int i = 0; i < payload->lives; ++i)
 				drawSprite(resources.lifeSprite, 320 + i * 60, 20);
 		}
@@ -246,7 +254,9 @@ namespace SI
 		}
 
 		void View::drawPlayer(std::shared_ptr<Md::PayloadEntity> e) {
-			if(flickerCounter.getCount()%2 || !payload->playerInvinc)	// Don't draw the player if he's invincible and the flicker counter is in a certain state
+			if((flickerCounter.getCount()%2 || !payload->playerInvinc )&& !payload->playerDead )	
+				// Don't draw the player if he's dead
+				// Don't draw the player if he's invincible and the flicker state is on
 				drawSprite(resources.playerSprite, e->xpos - 40, e->ypos - 20);
 		}
 

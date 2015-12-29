@@ -25,7 +25,7 @@ namespace SI
 
 	// Classes:
 
-	// An abstract class for an Entity in the world
+		// An abstract class for an Entity in the world
 		class Entity {
 		public:
 			static Model* model;
@@ -50,8 +50,8 @@ namespace SI
 
 		};
 
-	// An entity that bounces around and collides with other DebugEntity
-	// Implemented to test the view-model system
+		// An entity that bounces around and collides with other DebugEntity
+		// Implemented to test the view-model system
 		class DebugEntity : public Entity {
 		public:
 			double xvel, yvel;
@@ -67,32 +67,46 @@ namespace SI
 
 		};
 	
-	// An entity representing the player
+		// An entity representing the player
 		class Player : public Entity {
 		public:
 			std::string name;
 			Time::BinaryRepeatTimer fireCooldown;
 			double speed;
+			double bulletSpeed;
+			int bulletDmg;
 
 			Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch);
+
+			void shoot();
+
+			void moveLeft(double dt);
+			void moveRight(double dt);
+
 		};
 
-	// An enemy
+		// An enemy
 		class Enemy : public Entity {
+		private:
+			std::shared_ptr<RNG::RNG> rng;
+
 		public:
 			Enemy(double x, double y, int health = 1);
 
 			void tick(double dt);
 
+			void shoot();
+
 			void hurt(std::shared_ptr<Barrier> e);
 		};
 		
-	// A cluster of enemies
+		// A cluster of enemies
 		class EnemyCluster {
 		private:
 			Model* model;
 
 			std::vector<std::shared_ptr<Enemy>> enemies;
+			unsigned int initialCount;
 
 			bool xDir;
 			double yDistance;
@@ -105,6 +119,7 @@ namespace SI
 
 			void addEnemy(std::shared_ptr<Enemy> enemy);
 			void deleteEnemy(std::shared_ptr<Enemy> enemy);
+			void clear();
 
 			unsigned int count();
 			double lowestPoint();
@@ -113,13 +128,13 @@ namespace SI
 
 		};
 
-	// A barrier
+		// A barrier
 		class Barrier : public Entity {
 		public:
 			Barrier(double xpos, double ypos, int health = 4);
 		};
 
-	// An abstract bullet
+		// An abstract bullet
 		class Bullet : public Entity {
 		public:
 			double xvel, yvel;
@@ -133,7 +148,7 @@ namespace SI
 
 		};
 
-	// A friendly bullet
+		// A friendly bullet
 		class PlayerBullet : public Bullet {
 		public:
 			PlayerBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health = 2);
@@ -141,7 +156,7 @@ namespace SI
 			void hurt(std::shared_ptr<Enemy> e);
 		};
 		
-	// An enemy bullet
+		// An enemy bullet
 		class EnemyBullet : public Bullet {
 		public:
 			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health = 1);

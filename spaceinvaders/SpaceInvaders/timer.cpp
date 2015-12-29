@@ -74,10 +74,20 @@ namespace SI {
 
 		// WithinPeriodTimer : PeriodTimer
 
-		WithinPeriodTimer::WithinPeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch) : PeriodTimer(period, stopwatch) {}
+		WithinPeriodTimer::WithinPeriodTimer(double period, bool forceFalseState, std::shared_ptr<Stopwatch> stopwatch) :
+			PeriodTimer(period, stopwatch), forceFalseState(forceFalseState) {}
+
+		void WithinPeriodTimer::forceFalse(){
+			forceFalseState = true;
+		}
+
+		void WithinPeriodTimer::reset(){
+			forceFalseState = false;
+			PeriodTimer::reset();
+		}
 
 		bool WithinPeriodTimer::operator()(){
-			return (stopwatch->now() - timePoint).count() < period;
+			return !forceFalseState && ((stopwatch->now() - timePoint).count() < period);
 		}
 	}
 }

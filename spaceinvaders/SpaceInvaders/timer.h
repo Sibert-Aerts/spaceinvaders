@@ -63,9 +63,16 @@ namespace SI {
 
 		// A timer that checks if it's been less than 'period' time since its creation or the last reset
 		class WithinPeriodTimer : public PeriodTimer {
+		private:
+			bool forceFalseState;
+
 		public:
 
-			WithinPeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch = GlobalStopwatch::getInstance());
+			WithinPeriodTimer(double period, bool forceFalseState = false, std::shared_ptr<Stopwatch> stopwatch = GlobalStopwatch::getInstance());
+
+			virtual void forceFalse();
+
+			virtual void reset();
 
 			virtual bool operator()();
 		};

@@ -34,7 +34,9 @@ namespace SI {
 		Payload::Payload() :
 			secondsPassed(0),
 			paused(false),
-			gameOver(false)
+			gameOver(false),
+			levelComplete(false),
+			playerDead(false)
 		{}
 		
 		PayloadEntity::PayloadEntity() {}

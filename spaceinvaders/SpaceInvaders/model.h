@@ -5,6 +5,7 @@
 #include "controller.h"
 #include "time.h"
 #include "entity.h"
+#include "level.h"
 #include "payload.h"
 #include "random.h"
 
@@ -24,11 +25,18 @@ namespace SI {
 			std::shared_ptr<Ctrl::Controller> controller;
 			std::shared_ptr<Time::SimStopwatch> stopwatch;
 
+			LevelParser levelParser;
+			std::vector<std::shared_ptr<Level>> levels;
+			unsigned int currentLevel;
+
 			std::vector<std::shared_ptr<Entity>> entities;
 			EnemyCluster enemyCluster;
 
 			std::shared_ptr<Player> player;
-			Time::WithinPeriodTimer playerInvincTimer;	// shove this timer into the player
+			Time::WithinPeriodTimer playerInvincTimer;	// shove this timer into the player?
+			Time::WithinPeriodTimer playerDeadTimer;	// shove this timer into the player?
+			bool levelComplete;
+			Time::WithinPeriodTimer levelSwitchTimer;
 
 			bool gameOverState;
 			Time::BinaryRepeatTimer updateTimer;
@@ -49,6 +57,18 @@ namespace SI {
 			// Register the controller
 			void registerController(std::shared_ptr<Ctrl::Controller> controller);
 
+			// Remove all entities
+			void clearEntities();
+
+			// Retry the current level
+			void retryLevel();
+
+			// Load the current level
+			void loadLevel();
+
+			// Complete the current level and move on to the next, or win the game
+			void completeLevel();
+
 			// Advance the simulation by a single step
 			// But only if it has been long enough since the last tick
 			void tick();
@@ -56,8 +76,6 @@ namespace SI {
 			// Read and act according to the given inputs
 			void tickInput(double dt);
 
-			// Advance a DebugEntity by a single step
-			void tickDebugEntity(double dt, std::shared_ptr<DebugEntity> e);
 			// Advance a bullet by a single step
 			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers);
 

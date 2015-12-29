@@ -16,12 +16,11 @@ namespace SI {
 
 			Event(EventType type, double x = 0, double y = 0);
 		};
-
+		
 		// An enum representing a crude abstraction of types of entities
 		enum EntityType {
 			player, enemy, playerBullet, enemyBullet, barrier, powerup
 		};
-
 
 		// A struct representing all the data a view can know about an entity
 		struct PayloadEntity {
@@ -43,6 +42,8 @@ namespace SI {
 			unsigned int lives;
 			bool gameOver;
 			bool playerInvinc;
+			bool playerDead;
+			bool levelComplete;
 			bool paused;
 
 			// Debug variables

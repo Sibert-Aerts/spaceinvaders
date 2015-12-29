@@ -6,23 +6,26 @@ namespace SI {
 
 	namespace Md {
 
-
 		Model::Model(double tickPeriod) :
 			stopwatch(std::make_shared<Time::SimStopwatch>()),
 			updateTimer(tickPeriod),
 			counter(stopwatch),
 			pauseTimer(0.2f),
 			gameOverState(false),
-			playerInvincTimer(3.0f, stopwatch)
+			playerInvincTimer(3.0, true, stopwatch),
+			playerDeadTimer(2.0, true, stopwatch),
+			levelSwitchTimer(3.0, true), levelComplete(false),
+			currentLevel(0)
 		{
 			// Initialise the static Entity variable pointing to the model:
 			Entity::model = this;
 
 			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
 			payload = std::make_shared<Payload>();
-			payload->lives = player->health;
-			addEntity(player);
-			playerSpawn();
+
+			levels = levelParser.parseLevels();
+
+			loadLevel();
 		}
 
 		void Model::registerView(std::shared_ptr<Vw::View> view) {
@@ -31,6 +34,46 @@ namespace SI {
 
 		void Model::registerController(std::shared_ptr<Ctrl::Controller> controller) {
 			this->controller = controller;
+		}
+
+		void Model::clearEntities(){
+			entities.clear();
+			payload->payloadEntities.clear();
+		}
+
+		void Model::retryLevel(){
+			stopwatch->unPause();
+			player->health = 3;
+			gameOverState = payload->gameOver = false;
+			loadLevel();
+		}
+
+		void Model::loadLevel(){
+
+			clearEntities();
+			enemyCluster.clear();
+
+			payload->lives = player->health;
+			addEntity(player);
+			playerSpawn();
+			playerDeadTimer.forceFalse();
+			playerInvincTimer.forceFalse();
+
+			auto newEntities = levels[currentLevel]->makeEntities();
+			for (auto& e : newEntities)
+				addEntity(e);
+		}
+
+		void Model::completeLevel(){
+			if (currentLevel == levels.size() - 1) {
+				gameOver();
+				return;
+			}
+			currentLevel++;
+			levelComplete = payload->levelComplete = true;
+			stopwatch->pause();
+			levelSwitchTimer.reset();
+			loadLevel();
 		}
 
 		void Model::tick() {
@@ -44,11 +87,18 @@ namespace SI {
 				// read inputs based off dt
 			tickInput(dt);
 
-			// ____If the game is paused don't do any of the following: ________________
+			if (levelComplete && !levelSwitchTimer()) {
+				levelComplete = payload->levelComplete = false;
+				stopwatch->unPause();
+			}
+
 			if (stopwatch->isPaused())
 				return;
 
+			// ____ THE FOLLOWING ONLY HAPPENS IF THE GAME IS UNPAUSED: ____________________
+
 				// Update the payload on time-related business
+			payload->playerDead = playerDeadTimer();
 			payload->playerInvinc = playerInvincTimer();
 
 				// Separate the Entities
@@ -57,7 +107,7 @@ namespace SI {
 			std::vector<std::shared_ptr<Enemy>> enemies;
 			std::vector<std::shared_ptr<Barrier>> barriers;
 			
-			for (auto entity : entities) {
+			for (auto& entity : entities) {
 				if (auto& e = std::dynamic_pointer_cast<DebugEntity>(entity))
 					debugEntities.push_back(e);
 				if (auto& e = std::dynamic_pointer_cast<Bullet>(entity))
@@ -68,9 +118,10 @@ namespace SI {
 					barriers.push_back(e);
 			}
 			
-				// Tick entities
+				// Tick all entities appropriately
+
 			for (auto& e : debugEntities)
-				tickDebugEntity(dt, e);
+				e->tick(dt);
 
 			for (auto& e : bullets)
 				tickBullet(dt, e, enemies, barriers);
@@ -78,9 +129,15 @@ namespace SI {
 			for (auto& e : enemies)
 				tickEnemy(dt, e, barriers);
 
+			// Tick the enemy cluster
 			enemyCluster.tick(dt);
+
+			// if the enemies reach the bottom of the screen, the game is over
 			if (enemyCluster.lowestPoint() > 720)
 				gameOver();
+
+			if (enemyCluster.count() == 0)
+				completeLevel();
 
 				// Collissions
 			if(debugEntities.size() > 1)
@@ -93,34 +150,27 @@ namespace SI {
 		}
 
 		void Model::tickInput(double dt){
-			if (gameOverState)
-				return;
 			std::vector<Ctrl::Input> inputs = controller->getInput();
 			for (Ctrl::Input input : inputs) {
 				switch (input){
 
 				case Ctrl::shoot:
-					if (!stopwatch->isPaused())
-						if (player->fireCooldown()) {
-							addEntity(std::make_shared<Md::PlayerBullet>(player->xpos, player->ypos, 0, -400, 0, -200, 1));
-							payload->addEvent(friendlyShotFired);
-						}
+					if (!stopwatch->isPaused() && !playerDeadTimer())
+						player->shoot();
 					break;
 
 				case Ctrl::left:
-					if (!stopwatch->isPaused() && player->xpos > 50)
-						player->xpos -= dt * player->speed;
-					player->updatePosition();
+					if (!stopwatch->isPaused() && !playerDeadTimer())
+						player->moveLeft(dt);
 					break;
 
 				case Ctrl::right:
-					if (!stopwatch->isPaused() && player->xpos < 750)
-						player->xpos += dt * player->speed;
-					player->updatePosition();
+					if (!stopwatch->isPaused() && !playerDeadTimer())
+						player->moveRight(dt);
 					break;
 
 				case Ctrl::pause:
-					if (pauseTimer()) {
+					if (pauseTimer() && !gameOverState) {
 						if (stopwatch->isPaused()) {
 							stopwatch->unPause();
 							payload->paused = false;
@@ -131,29 +181,12 @@ namespace SI {
 							payload->addEvent(paused);
 						}
 					}
+					else if (gameOverState) {
+						retryLevel();
+					}
 					break;
 				}
 			}
-		}
-
-		void Model::tickDebugEntity(double dt, std::shared_ptr<DebugEntity> e) {
-			e->tick(dt);
-			if (e->xpos < e->size){
-				e->xacc = std::abs(e->xacc);
-				e->xvel = std::abs(e->xvel);
-			}
-			if (e->xpos > 800 - e->size) {
-				e->xacc = -std::abs(e->xacc);
-				e->xvel = -std::abs(e->xvel);
-			}
-			if (e->ypos < e->size) {
-				e->yacc = std::abs(e->yacc);
-				e->yvel = std::abs(e->yvel);
-			}
-			if (e->ypos > 720 - e->size) {
-				e->yacc = -std::abs(e->yacc);
-				e->yvel = -std::abs(e->yvel);
-			}				
 		}
 
 		void Model::tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers){
@@ -168,7 +201,7 @@ namespace SI {
 						p->hurt(enemy);
 				
 			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
-				if (p->hit(player)) {
+				if (p->hit(player) && !playerDeadTimer()) {
 					payload->addEvent(Event(bulletHit, e->xpos, e->ypos));
 					deleteEntity(e);
 					playerHit();
@@ -227,8 +260,9 @@ namespace SI {
 
 			player->health--;
 			payload->lives = player->health;
-			if (player->isDead())
+			if (player->isDead()) {
 				gameOver();
+			}
 			else
 				playerSpawn();
 		}
@@ -236,6 +270,7 @@ namespace SI {
 		void Model::playerSpawn() {
 			player->xpos = 400;
 			player->updatePosition();
+			playerDeadTimer.reset();
 			playerInvincTimer.reset();
 		}
 

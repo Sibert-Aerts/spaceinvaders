@@ -18,6 +18,7 @@ namespace SI {
 		// model.addEntity(std::make_shared<Md::DebugEntity>(50,50,20,20,20,20,20));
 		
 		// TODO: read this out of an xml or something
+		/*
 		for (int i = 0; i < 6; ++i)
 			for (int j = 0; j < 4; ++j)
 				model.addEntity(std::make_shared<Md::Enemy>(100 + 120*i, 100+80*j,2));
@@ -27,7 +28,7 @@ namespace SI {
 			model.addEntity(std::make_shared<Md::Barrier>(80 + 120 * i, 580));
 			model.addEntity(std::make_shared<Md::Barrier>(120 + 120 * i, 580));
 		}
-
+		*/
 	}
 
 	void Game::registerView( std::shared_ptr<Vw::View> view ){

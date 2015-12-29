@@ -61,8 +61,34 @@ namespace SI {
 			Entity( EntityType::player, x, y, 28.0f, 3),
 			name(name),
 			fireCooldown(0.4f, stopwatch),
-			speed(200)
+			speed(200), 
+			bulletSpeed(400.0f), bulletDmg(1)
 		{}
+
+		void Player::shoot(){
+			if (fireCooldown()) {
+				model->addEntity(std::make_shared<Md::PlayerBullet>(xpos, ypos, 0, -bulletSpeed, 0, -200, bulletDmg));
+				model->addEvent(Event(friendlyShotFired));
+			}
+		}
+
+		void Player::moveLeft(double dt){
+			if (xpos < 50){
+				xpos = 50.0f;
+				return;
+			}
+			xpos -= dt * speed;
+			updatePosition();
+		}
+
+		void Player::moveRight(double dt){
+			if (xpos > 750) {
+				xpos = 750.0f;
+				return;
+			}
+			xpos += dt * speed;
+			updatePosition();
+		}
 
 		// Bullet : Entity
 
@@ -142,13 +168,17 @@ namespace SI {
 		// Enemy : Entity
 
 		Enemy::Enemy(double x, double y, int health) :
-			Entity(EntityType::enemy, x, y, 35.0f, health) {}
+			Entity(EntityType::enemy, x, y, 35.0f, health), rng(RNG::RNG::getInstance()){}
 
 		void Enemy::tick(double dt){
-			if (RNG::RNG::getInstance()->chanceOutOf(1, 4000)) {
-				model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, RNG::RNG::getInstance()->intFromRange(-20, 20), 300, 0, 0));
-				model->addEvent(Event(EventType::enemyShotFired));
+			if (rng->chanceOutOf(0.1 * dt)) {
+				shoot();
 			}
+		}
+
+		void Enemy::shoot() {
+			model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, rng->intFromRange(-20, 20), 300, 0, 0));
+			model->addEvent(Event(EventType::enemyShotFired));
 		}
 
 		void Enemy::hurt(std::shared_ptr<Barrier> e){
@@ -175,6 +205,23 @@ namespace SI {
 			yvel += (dt * yacc);
 			xpos += (dt * xvel);
 			ypos += (dt * yvel);
+
+			if (xpos < size) {
+				xacc = std::abs(xacc);
+				xvel = std::abs(xvel);
+			}else if (xpos > 800 - size) {
+				xacc = -std::abs(xacc);
+				xvel = -std::abs(xvel);
+			}
+
+			if (ypos < size) {
+				yacc = std::abs(yacc);
+				yvel = std::abs(yvel);
+			} else if (ypos > 720 - size) {
+				yacc = -std::abs(yacc);
+				yvel = -std::abs(yvel);
+			}
+
 			updatePosition();
 			// Jokes below
 			payloadEntity->type = (EntityType)((payloadEntity->type + 1) % 8);
@@ -226,7 +273,7 @@ namespace SI {
 		}
 
 		EnemyCluster::EnemyCluster() : 
-			xDir(true), yDistance(-1.0f){}
+			xDir(true), yDistance(-1.0f), initialCount(0){}
 
 		void EnemyCluster::addEnemy(std::shared_ptr<Enemy> enemy){
 			enemies.push_back(enemy);
@@ -236,12 +283,20 @@ namespace SI {
 			enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
 		}
 
+		void EnemyCluster::clear(){
+			xDir = true;
+			yDistance = -1.0;
+			enemies.clear();
+			initialCount = 0;
+		}
+
 		unsigned int EnemyCluster::count(){
 			return enemies.size();
 		}
 
 		void EnemyCluster::tick(double dt){
-			static unsigned int initialCount = count();
+			if (!initialCount)
+				initialCount = count();
 			double vel = 20.0f + (initialCount - count()) * 6.0f;
 			double xd(0.0f), yd(0.0f);
 			if (yDistance < 0) {
