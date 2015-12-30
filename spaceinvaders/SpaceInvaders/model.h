@@ -1,12 +1,14 @@
 #pragma once
 
 #include "StdAfx.h"
+	// Model stuff
+#include "level.h"
+#include "payload.h"
+#include "entity.h"
+	// Other
 #include "view.h"
 #include "controller.h"
 #include "time.h"
-#include "entity.h"
-#include "level.h"
-#include "payload.h"
 #include "random.h"
 
 namespace SI {
@@ -17,30 +19,43 @@ namespace SI {
 
 	namespace Md {
 
+		class Entity;
+		class Player;
+		class Enemy;
+		class EnemyCluster;
+		class Barrier;
+		class Bullet;
+		class FriendlyBullet;
+		class EnemyBullet;
+		class Powerup;
+
+		class LevelParser;
+		class Level;
+		
 	// A model capable of simulating a game of Space Invaders
 		class Model {
 
 		private:
 			// Data members
+			Time::BinaryRepeatTimer updateTimer;
+
 			std::shared_ptr<Ctrl::Controller> controller;
 			std::shared_ptr<Time::SimStopwatch> stopwatch;
 
-			LevelParser levelParser;
-			std::vector<std::shared_ptr<Level>> levels;
+			std::unique_ptr<LevelParser> levelParser;
 			unsigned int currentLevel;
+			std::vector<std::shared_ptr<Level>> levels;
 
 			std::vector<std::shared_ptr<Entity>> entities;
-			EnemyCluster enemyCluster;
+			std::unique_ptr<EnemyCluster> enemyCluster;
 
 			std::shared_ptr<Player> player;
 			Time::WithinPeriodTimer playerInvincTimer;	// shove this timer into the player?
 			Time::WithinPeriodTimer playerDeadTimer;	// shove this timer into the player?
-			bool levelComplete;
-			Time::WithinPeriodTimer levelSwitchTimer;
 
-			bool gameOverState;
-			Time::BinaryRepeatTimer updateTimer;
-			Time::BinaryRepeatTimer pauseTimer;
+			ModelState state;
+			Time::WithinPeriodTimer levelSwitchTimer;
+			Time::BinaryRepeatTimer pauseTimer;	// get rid of this sick filth
 
 			// The model's own payload
 			std::shared_ptr<Payload> payload;

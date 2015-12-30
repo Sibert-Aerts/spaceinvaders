@@ -4,7 +4,8 @@
 namespace SI {
 	namespace Vw {
 		Resources::Resources(std::shared_ptr<Time::Stopwatch> stopwatch) :
-			alienAnimationDelay(0.5f, stopwatch)
+			smallEnemyAnimationTimer(0.5, stopwatch),
+			bigEnemyAnimationTimer(0.2, stopwatch)
 		{
 			// Load font
 			if (!font8BitOperator.loadFromFile("Assets\\8bitOperatorPlus-Bold.ttf"))
@@ -30,11 +31,11 @@ namespace SI {
 			loadSprite(spriteSheetTexture, playerBulletSprite1, 2, 0, 1, 1);
 			loadSprite(spriteSheetTexture, playerBulletSprite2, 3, 0, 1, 1);
 
-			loadSprite(spriteSheetTexture, enemySprite1,		0, 1, 2, 1);
+			loadSprite(spriteSheetTexture, smallEnemySprite1,	0, 1, 2, 1);
 			loadSprite(spriteSheetTexture, enemyBulletSprite1,	2, 1, 1, 1);
 			loadSprite(spriteSheetTexture, enemyBulletSprite2,	3, 1, 1, 1);
 
-			loadSprite(spriteSheetTexture, enemySprite2,		0, 2, 2, 1);
+			loadSprite(spriteSheetTexture, smallEnemySprite2,	0, 2, 2, 1);
 			loadSprite(spriteSheetTexture, lifeSprite,			2, 2, 1, 1);
 			loadSprite(spriteSheetTexture, powerupSprite,		3, 2, 1, 1);
 
@@ -42,6 +43,11 @@ namespace SI {
 			loadSprite(spriteSheetTexture, barrierSprite2,		1, 3, 1, 1);
 			loadSprite(spriteSheetTexture, barrierSprite3,		2, 3, 1, 1);
 			loadSprite(spriteSheetTexture, barrierSprite4,		3, 3, 1, 1);
+
+			loadSprite(spriteSheetTexture, bigEnemySprite1,		0, 4, 2, 2);
+			loadSprite(spriteSheetTexture, bigEnemySprite2,		2, 4, 2, 2);
+			loadSprite(spriteSheetTexture, bigEnemySprite3,		4, 4, 2, 2);
+			loadSprite(spriteSheetTexture, bigEnemySprite4,		6, 4, 2, 2);
 			
 			// Load sounds
 			loadSound(playerFireSoundBuffer, playerFireSound, "Assets\\sounds\\playerShoot.wav");
@@ -57,14 +63,32 @@ namespace SI {
 			enemyHitSound.setVolume(75.0f);
 		}
 
-		sf::Sprite & Resources::getEnemySprite()
+		sf::Sprite & Resources::getSmallEnemySprite()
 		{
-			static bool animState = true;
-			animState = animState ^ alienAnimationDelay();
-			if (animState)
-				return enemySprite1;
-			else
-				return enemySprite2;
+			switch(smallEnemyAnimationTimer.getCount()%2) {
+			case 0:
+				return smallEnemySprite1;
+			case 1:
+				return smallEnemySprite2;
+			default:	// Will never happen because it's a modulo but else the compiler complains
+				return smallEnemySprite1;
+			}
+		}
+
+		sf::Sprite & Resources::getBigEnemySprite()
+		{
+			switch (bigEnemyAnimationTimer.getCount() % 4) {
+			case 0:
+				return bigEnemySprite1;
+			case 1:
+				return bigEnemySprite2;
+			case 2:
+				return bigEnemySprite3;
+			case 3:
+				return bigEnemySprite4;
+			default:	// Will never happen because it's a modulo but else the compiler complains
+				return bigEnemySprite1;
+			}
 		}
 
 		sf::Sprite& Resources::getBarrierSprite(int health) {

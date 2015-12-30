@@ -4,15 +4,18 @@
 #include "Time.h"
 #include "payload.h"
 #include "random.h"
+#include "model.h"
 
 namespace SI
 {
 	namespace Md {
 
+		// Resolve circular dependencies with included headers
 		class Model;
 		struct PayloadEntity;
 		enum EntityType;
 
+		// Resolve circular dependencies within this header
 		class Entity;
 		class Player;
 		class Enemy;
@@ -22,7 +25,7 @@ namespace SI
 		class FriendlyBullet;
 		class EnemyBullet;
 		class Powerup;
-
+		
 	// Classes:
 
 		// An abstract class for an Entity in the world
@@ -87,17 +90,35 @@ namespace SI
 
 		// An enemy
 		class Enemy : public Entity {
-		private:
+		protected:
 			std::shared_ptr<RNG::RNG> rng;
 
 		public:
-			Enemy(double x, double y, int health = 1);
+			Enemy(EntityType type, double x, double y, int health);
 
 			void tick(double dt);
 
-			void shoot();
+			virtual void shoot() = 0;
+			virtual void hurt(std::shared_ptr<Barrier> e) = 0;
+			virtual void destroyEvent() = 0;
+		};
 
-			void hurt(std::shared_ptr<Barrier> e);
+		class SmallEnemy : public Enemy {
+		public:
+			SmallEnemy(double x, double y, int health = 1);
+
+			virtual void shoot();
+			virtual void hurt(std::shared_ptr<Barrier> e);
+			virtual void destroyEvent();
+		};
+
+		class BigEnemy : public Enemy {
+		public:
+			BigEnemy(double x, double y, int health = 2);
+
+			virtual void shoot();
+			virtual void hurt(std::shared_ptr<Barrier> e);
+			virtual void destroyEvent();
 		};
 		
 		// A cluster of enemies
@@ -108,6 +129,8 @@ namespace SI
 			std::vector<std::shared_ptr<Enemy>> enemies;
 			unsigned int initialCount;
 
+			double speed, speedInc;
+
 			bool xDir;
 			double yDistance;
 
@@ -116,6 +139,8 @@ namespace SI
 
 		public:
 			EnemyCluster();
+
+			void setSpeed(double speed, double speedInc);
 
 			void addEnemy(std::shared_ptr<Enemy> enemy);
 			void deleteEnemy(std::shared_ptr<Enemy> enemy);

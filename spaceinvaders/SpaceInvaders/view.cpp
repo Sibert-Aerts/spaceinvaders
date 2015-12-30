@@ -3,13 +3,18 @@
 
 namespace SI
 {
-
-
 	namespace Vw {
 
 		// VARIABLES (TODO: READ THESE FROM AN INI OR SOMETHING)
 
 		bool drawDebugText = true;	// Draw hitboxes or not
+
+		// Constant variables
+
+		const sf::Color green0(15, 56, 15);
+		const sf::Color green1(48, 98, 48);
+		const sf::Color green2(139, 172, 15);
+		const sf::Color green3(169, 202, 30);
 		
 		// Helper functions
 		
@@ -51,7 +56,8 @@ namespace SI
 			stopwatch(Time::GlobalStopwatch::getInstance()),
 			frameTimer(tickPeriod, stopwatch),
 			resources(stopwatch),
-			flickerCounter(0.05f)
+			flickerCounter(0.05f),
+			rng(RNG::RNG::getInstance())
 		{
 			// Create window
 			window = std::make_shared<sf::RenderWindow>(sf::VideoMode(800, 720), "Space Invaders");
@@ -89,8 +95,11 @@ namespace SI
 				case Md::EntityType::player:
 					drawPlayer(e);
 					break;
-				case Md::EntityType::enemy:
-					drawEnemy(e);
+				case Md::EntityType::smallEnemy:
+					drawSmallEnemy(e);
+					break;
+				case Md::EntityType::bigEnemy:
+					drawBigEnemy(e);
 					break;
 				case Md::EntityType::playerBullet:
 					drawPlayerBullet(e);
@@ -120,19 +129,25 @@ namespace SI
 			drawShadedText(timerText, 20, green3, sf::Vector2f(680, 20), 2, green1);
 
 			// if game over, fade the screen and draw "GAME OVER"
-			if (payload->gameOver) {
+			switch (payload->state) {
+			case Md::ModelState::running:
+				break;
+			case Md::ModelState::paused:
 				window->draw(resources.pauseOverlaySprite);
-				drawShadedText("GAME OVER", 80, green2, sf::Vector2f(160, 260), 5, green1);
-			}
-			// if paused, fade the screen and draw "PAUSED"
-			else if (payload->paused) {
+				drawCenteredShadedText(payload->levelName, 50, 160, green3, green0, 5);
+				drawCenteredShadedText("PAUSED", 80, 300, green2, green1, 5);
+				drawCenteredText("Press escape to unpause", 30, 360, green1);
+				break;
+			case Md::ModelState::gameOver:
 				window->draw(resources.pauseOverlaySprite);
-				drawShadedText("PAUSED", 80, green3, sf::Vector2f(240, 260), 5, green1);
-			}
-			// if level complete, fade the screen and draw "LEVEL COMPLETE"
-			else if (payload->levelComplete) {
+				drawCenteredShadedText("GAME OVER", 80, 300, green2, green1, 5);
+				drawCenteredShadedText("Press escape to retry", 30, 360, green2, green1, 3);
+				break;
+			case Md::ModelState::levelSwitch:
 				window->draw(resources.pauseOverlaySprite);
-				drawShadedText("LEVEL COMPLETE", 70, green3, sf::Vector2f(70, 275), 5, green1);
+				drawCenteredShadedText("LEVEL COMPLETE", 80, 300, green2, green1, 5);
+				drawCenteredText("Next level: " + payload->levelName, 30, 360, green1);
+				break;
 			}
 
 			// DEBUG TEXT:
@@ -162,7 +177,6 @@ namespace SI
 
 		void View::updateEvents(){
 			std::vector<Md::Event> events = payload->popEvents();
-
 			for (auto e : events) {
 				switch (e.type) {
 				case Md::EventType::friendlyShotFired:
@@ -181,10 +195,18 @@ namespace SI
 				case Md::EventType::enemyHit:
 					resources.enemyHitSound.play();
 					break;
-				case Md::EventType::enemyDestroyed:
+				case Md::EventType::smallEnemyDestroyed:
 					resources.enemyDestroyedSound.play();
 					makeParticleExplosion(e.x, e.y, 150, 16, 10, -5, green1);
 					makeParticleExplosion(e.x, e.y, 100, 8, 15, -10, green2);
+					break;
+				case Md::EventType::bigEnemyDestroyed:
+					resources.enemyDestroyedSound.play();
+					makeRandomParticleExplosion(e.x, e.y, 75, 50, 16, 20, 5, -15, green0, 3.0, 0.0);
+					makeRandomParticleExplosion(e.x, e.y, 250, 100, 8, 3, 0, 0, green3, 1.0, 0.3);
+					makeParticleExplosion(e.x, e.y, 150, 16, 12, -5, green1, 0.0, 1.2);
+					makeParticleExplosion(e.x, e.y, 75, 8, 25, -20, green2, 0.0, 1.5);
+
 					break;
 				case Md::EventType::barrierHit:
 					resources.barrierHitSound.play();
@@ -208,10 +230,20 @@ namespace SI
 			}
 		}
 
-		void View::makeParticleExplosion(double x, double y, unsigned int speed, unsigned int count, double size, double sized, sf::Color color, double angle) {
+		void View::makeParticleExplosion(double x, double y, double speed, unsigned int count, double size, double sized, sf::Color color, double angle, double time) {
 			for (unsigned int i = 0; i < count; ++i)
-				particles.push_back(std::make_shared<Particle>(x, y, speed*std::sin(std::_Pi*2*i/count + angle), speed * std::cos(std::_Pi * 2 * i / count + angle), size, sized, 1, color));
+				particles.push_back(std::make_shared<Particle>(x, y, speed*std::sin(std::_Pi*2*i/count + angle), speed * std::cos(std::_Pi * 2 * i / count + angle), size, sized, time, color));
 		}
+
+		void View::makeRandomParticleExplosion(double x, double y, double speed, double speedVar, unsigned int count, double size, double sizeVar, double sized, sf::Color color, double time, double timeVar){
+			for (unsigned int i = 0; i < count; ++i) {
+				double rSpeed = rng->realFromRange(speed-speedVar, speed+speedVar);
+				double angle = rng->realFromRange(0.0, (double)std::_Pi * 2);
+				double rSize = rng->realFromRange(size - sizeVar, size + sizeVar);
+				double rTime = rng->realFromRange(time - timeVar, time + timeVar);
+				particles.push_back(std::make_shared<Particle>(x, y, rSpeed*std::sin(angle), rSpeed * std::cos(angle), rSize, sized, rTime, color));
+				}
+			}
 
 		void View::tickParticles(double dt){
 			std::vector<std::shared_ptr<Particle>> dead;
@@ -242,11 +274,6 @@ namespace SI
 			for (unsigned int i = 0; i < payload->lives; ++i)
 				drawSprite(resources.lifeSprite, 320 + i * 60, 20);
 		}
-		
-		void View::draw(std::shared_ptr<Md::DebugEntity> e) {
-			//drawText(std::to_string(d->xpos) + " , " + std::to_string(d->ypos), 12, sf::Color(255,0,0), sf::Vector2f((float)d->xpos, (float)d->ypos));
-			drawCircle(e->size, mapEntityToColor(e), e->xpos, e->ypos);
-		}
 
 		void View::drawSprite(sf::Sprite& sprite, double x, double y) {
 			sprite.setPosition((float)align(x, 5.0f), (float)align(y,5.0f));
@@ -268,8 +295,12 @@ namespace SI
 			drawSprite(resources.getEnemyBulletSprite(e->health), e->xpos - 20, e->ypos - 20);
 		}
 
-		void View::drawEnemy(std::shared_ptr<Md::PayloadEntity> e) {
-			drawSprite(resources.getEnemySprite(), e->xpos - 40, e->ypos - 20);
+		void View::drawSmallEnemy(std::shared_ptr<Md::PayloadEntity> e) {
+			drawSprite(resources.getSmallEnemySprite(), e->xpos - 40, e->ypos - 20);
+		}
+
+		void View::drawBigEnemy(std::shared_ptr<Md::PayloadEntity> e){
+			drawSprite(resources.getBigEnemySprite(), e->xpos - 40, e->ypos - 40);
 		}
 		
 		void View::drawBarrier(std::shared_ptr<Md::PayloadEntity> e) {
@@ -287,8 +318,52 @@ namespace SI
 		}
 
 		void View::drawShadedText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position, int shadeDistance, sf::Color shadeColor){
-			drawText(text, size, shadeColor, sf::Vector2f(position.x, position.y + shadeDistance));
-			drawText(text, size, color, position);
+			sf::Text t;
+			t.setFont(resources.font8BitOperator);
+			t.setString(text);
+			t.setCharacterSize(size);
+
+			t.setColor(shadeColor);
+			t.setPosition(sf::Vector2f(position.x, position.y + shadeDistance));
+			window->draw(t);
+
+			t.setColor(color);
+			t.setPosition(position);
+			window->draw(t);
+		}
+
+		void View::drawCenteredText(std::string text, unsigned int size, double ypos, sf::Color color){
+			sf::Text t;
+			t.setFont(resources.font8BitOperator);
+			t.setString(text);
+			t.setCharacterSize(size);
+
+			sf::FloatRect textRect = t.getLocalBounds();
+			t.setOrigin(textRect.left + textRect.width / 2.0f,
+				textRect.top + textRect.height / 2.0f);
+			
+			t.setColor(color);
+			t.setPosition(sf::Vector2f(800 / 2.0f, (float)ypos));
+			window->draw(t);
+		}
+
+		void View::drawCenteredShadedText(std::string text, unsigned int size, double ypos, sf::Color color, sf::Color shade, int shadeDistance) {
+			sf::Text t;
+			t.setFont(resources.font8BitOperator);
+			t.setString(text);
+			t.setCharacterSize(size);
+			t.setColor(shade);
+
+			sf::FloatRect textRect = t.getLocalBounds();
+			t.setOrigin(textRect.left + textRect.width / 2.0f,
+				textRect.top + textRect.height / 2.0f);
+
+			t.setPosition(sf::Vector2f(800 / 2.0f, (float)ypos + shadeDistance));
+			window->draw(t);
+
+			t.setColor(color);
+			t.setPosition(sf::Vector2f(800 / 2.0f, (float)ypos));
+			window->draw(t);
 		}
 
 		void View::drawCircle(float size, sf::Color color, double x, double y) {

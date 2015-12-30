@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "entity.h"
-#include "model.h"
 
 
 namespace SI {
@@ -15,7 +14,7 @@ namespace SI {
 		}
 
 		// Entity
-
+		
 		// static data member:
 		Model* Entity::model;
 
@@ -156,7 +155,7 @@ namespace SI {
 
 			if (e->isDead()) {
 				model->deleteEntity(e);
-				model->addEvent(Event(enemyDestroyed, e->xpos, e->ypos));
+				e->destroyEvent();
 			}
 		}
 
@@ -167,8 +166,8 @@ namespace SI {
 
 		// Enemy : Entity
 
-		Enemy::Enemy(double x, double y, int health) :
-			Entity(EntityType::enemy, x, y, 35.0f, health), rng(RNG::RNG::getInstance()){}
+		Enemy::Enemy(EntityType type, double x, double y, int health) :
+			Entity(type, x, y, 35.0f, health), rng(RNG::RNG::getInstance()) {}
 
 		void Enemy::tick(double dt){
 			if (rng->chanceOutOf(0.1 * dt)) {
@@ -176,19 +175,51 @@ namespace SI {
 			}
 		}
 
-		void Enemy::shoot() {
-			model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, rng->intFromRange(-20, 20), 300, 0, 0));
+		// SmallEnemy : Enemy
+
+		SmallEnemy::SmallEnemy(double x, double y, int health) : Enemy(smallEnemy, x, y, health) {}
+
+		void SmallEnemy::shoot() {
+			model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, rng->intFromRange(-30, 30), 300, 0, 0, 1));
 			model->addEvent(Event(EventType::enemyShotFired));
 		}
 
-		void Enemy::hurt(std::shared_ptr<Barrier> e){
-			health -= e->health/3;	// 1 if barrier is at 3 or 4 health, 0 if barrier is at 1 or 2 health
+		void SmallEnemy::hurt(std::shared_ptr<Barrier> e){
+			int min = std::min(health, 1 + e->health / 2);	// Take at least 1 damage, + 1 damage for every 2 hp the barrier has
+			health -= min;
 			model->addEvent(Event(bulletHit, (e->xpos+xpos)/2, (e->ypos + ypos) / 2));	// create an explosion between the barrier and alien
 			updateHealth();
 			
+			e->health -= min * 2;
+			if (e->isDead()) {
+				model->deleteEntity(e);
+				model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+			}
+			e->updateHealth();
+		}
+
+		void SmallEnemy::destroyEvent(){
+			model->addEvent(Event(smallEnemyDestroyed, xpos, ypos));
+		}
+
+		// BigEnemy : Enemy
+
+		BigEnemy::BigEnemy(double x, double y, int health) : Enemy(bigEnemy, x, y, health) {}
+
+		void BigEnemy::shoot() {
+			model->addEntity(std::make_shared<Md::EnemyBullet>(xpos, ypos, rng->intFromRange(-20, 20), 200, 0, 0, 2));
+			model->addEvent(Event(EventType::enemyShotFired));
+		}
+
+		void BigEnemy::hurt(std::shared_ptr<Barrier> e){
+			// Straight-up destroy the barrier without taking damage
+			model->addEvent(Event(bulletHit, (e->xpos + xpos) / 2, (e->ypos + ypos) / 2));	// create an explosion between the barrier and alien
 			model->deleteEntity(e);
 			model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+		}
 
+		void BigEnemy::destroyEvent(){
+			model->addEvent(Event(bigEnemyDestroyed, xpos, ypos));
 		}
 
 		// DebugEntity : Entity
@@ -275,6 +306,11 @@ namespace SI {
 		EnemyCluster::EnemyCluster() : 
 			xDir(true), yDistance(-1.0f), initialCount(0){}
 
+		void EnemyCluster::setSpeed(double speed, double speedInc){
+			this->speed = speed;
+			this->speedInc = speedInc;
+		}
+
 		void EnemyCluster::addEnemy(std::shared_ptr<Enemy> enemy){
 			enemies.push_back(enemy);
 		}
@@ -297,7 +333,7 @@ namespace SI {
 		void EnemyCluster::tick(double dt){
 			if (!initialCount)
 				initialCount = count();
-			double vel = 20.0f + (initialCount - count()) * 6.0f;
+			double vel = speed + (initialCount - count()) * speedInc;
 			double xd(0.0f), yd(0.0f);
 			if (yDistance < 0) {
 				if (( xDir && rightMostPoint() > 790) || (!xDir && leftMostPoint() < 10)) {
@@ -309,7 +345,10 @@ namespace SI {
 			}
 			else {
 				yd = dt * vel;
-				yDistance -= yd;
+				if (lowestPoint() > 720)	// If one alien reaches the bottom of the screen, keep moving down
+					yDistance = 20000.0;
+				else
+					yDistance -= yd;
 			}
 
 			for (auto& enemy : enemies){

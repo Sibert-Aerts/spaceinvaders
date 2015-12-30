@@ -11,19 +11,23 @@ namespace SI {
 			updateTimer(tickPeriod),
 			counter(stopwatch),
 			pauseTimer(0.2f),
-			gameOverState(false),
+			state(ModelState::running),
 			playerInvincTimer(3.0, true, stopwatch),
 			playerDeadTimer(2.0, true, stopwatch),
-			levelSwitchTimer(3.0, true), levelComplete(false),
+			levelSwitchTimer(3.0, true),
 			currentLevel(0)
 		{
 			// Initialise the static Entity variable pointing to the model:
+			// Todo: make this less horrible in case of multiple Models running in tandem...?
 			Entity::model = this;
+
+			levelParser = std::make_unique<LevelParser>();
+			enemyCluster = std::make_unique<EnemyCluster>();
 
 			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
 			payload = std::make_shared<Payload>();
 
-			levels = levelParser.parseLevels();
+			levels = levelParser->parseLevels();
 
 			loadLevel();
 		}
@@ -44,16 +48,18 @@ namespace SI {
 		void Model::retryLevel(){
 			stopwatch->unPause();
 			player->health = 3;
-			gameOverState = payload->gameOver = false;
+			state = payload->state = ModelState::running;
 			loadLevel();
 		}
 
 		void Model::loadLevel(){
 
 			clearEntities();
-			enemyCluster.clear();
+			enemyCluster->clear();
+			enemyCluster->setSpeed(levels[currentLevel]->speed, levels[currentLevel]->speedInc);
 
 			payload->lives = player->health;
+			payload->levelName = levels[currentLevel]->name;
 			addEntity(player);
 			playerSpawn();
 			playerDeadTimer.forceFalse();
@@ -70,7 +76,7 @@ namespace SI {
 				return;
 			}
 			currentLevel++;
-			levelComplete = payload->levelComplete = true;
+			state = payload->state = ModelState::levelSwitch;
 			stopwatch->pause();
 			levelSwitchTimer.reset();
 			loadLevel();
@@ -85,10 +91,12 @@ namespace SI {
 			double dt = stopwatch->tick();
 
 				// read inputs based off dt
-			tickInput(dt);
+			if(state != ModelState::levelSwitch)
+				tickInput(dt);
 
-			if (levelComplete && !levelSwitchTimer()) {
-				levelComplete = payload->levelComplete = false;
+				// If we're in the LevelComplete state, check if we can leave the state, otherwise don't do anything
+			if (state == ModelState::levelSwitch && !levelSwitchTimer()) {
+				state = payload->state = ModelState::running;
 				stopwatch->unPause();
 			}
 
@@ -130,13 +138,13 @@ namespace SI {
 				tickEnemy(dt, e, barriers);
 
 			// Tick the enemy cluster
-			enemyCluster.tick(dt);
+			enemyCluster->tick(dt);
 
 			// if the enemies reach the bottom of the screen, the game is over
-			if (enemyCluster.lowestPoint() > 720)
+			if (enemyCluster->lowestPoint() > 720)
 				gameOver();
 
-			if (enemyCluster.count() == 0)
+			if (enemyCluster->count() == 0)
 				completeLevel();
 
 				// Collissions
@@ -157,6 +165,10 @@ namespace SI {
 				case Ctrl::shoot:
 					if (!stopwatch->isPaused() && !playerDeadTimer())
 						player->shoot();
+					if (stopwatch->isPaused() && !levelSwitchTimer()) {
+						completeLevel();
+						std::cout << "SKIPPING LEVEL" << std::endl;
+					}
 					break;
 
 				case Ctrl::left:
@@ -170,18 +182,17 @@ namespace SI {
 					break;
 
 				case Ctrl::pause:
-					if (pauseTimer() && !gameOverState) {
-						if (stopwatch->isPaused()) {
+					if (pauseTimer()) {	// Rid me of this filthy thing, and this whole damn switch case!!!!!!!	
+						if (stopwatch->isPaused() && (state == ModelState::paused)) {					// If paused, escape unpauses
 							stopwatch->unPause();
-							payload->paused = false;
+							state = payload->state = ModelState::running;
 							payload->addEvent(unPaused);
-						} else {
+						} else if (!stopwatch->isPaused() && (state == ModelState::running) ){										// If unpaused, escape pauses
 							stopwatch->pause();
-							payload->paused = true;
+							state = payload->state = ModelState::paused;
 							payload->addEvent(paused);
 						}
-					}
-					else if (gameOverState) {
+					} else if (state == ModelState::gameOver) {			// If game over, escape retries the level
 						retryLevel();
 					}
 					break;
@@ -218,7 +229,7 @@ namespace SI {
 					e->hurt(barrier);
 					if (e->isDead()) {
 						deleteEntity(e);
-						addEvent(Event(enemyDestroyed, e->xpos, e->ypos));
+						e->destroyEvent();
 					}
 				}
 			}
@@ -232,7 +243,7 @@ namespace SI {
 
 			entities.push_back(entity);
 			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
-				enemyCluster.addEnemy(e);
+				enemyCluster->addEnemy(e);
 
 			auto pe = payload->addEntity();
 			entity->registerPayloadEntity(pe);
@@ -244,7 +255,7 @@ namespace SI {
 
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
 			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
-				enemyCluster.deleteEnemy(e);
+				enemyCluster->deleteEnemy(e);
 
 			payload->deleteEntity(entity->payloadEntity);
 
@@ -276,8 +287,7 @@ namespace SI {
 
 		void Model::gameOver() {
 			stopwatch->pause();
-			gameOverState = true;
-			payload->gameOver = true;
+			state = payload->state = ModelState::gameOver;
 			payload->addEvent(EventType::gameOver);
 		}
 

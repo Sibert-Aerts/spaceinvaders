@@ -16,6 +16,7 @@
 #include <bitset>
 
 #include <algorithm>
+#include <sstream>
 #include <random>
 #include <chrono>
 #include <thread>

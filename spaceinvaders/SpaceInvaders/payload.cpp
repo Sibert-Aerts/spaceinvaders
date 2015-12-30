@@ -32,10 +32,8 @@ namespace SI {
 		}
 
 		Payload::Payload() :
-			secondsPassed(0),
-			paused(false),
-			gameOver(false),
-			levelComplete(false),
+			secondsPassed(0), 
+			state(ModelState::running),
 			playerDead(false)
 		{}
 		

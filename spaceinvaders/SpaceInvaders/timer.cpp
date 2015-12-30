@@ -87,7 +87,7 @@ namespace SI {
 		}
 
 		bool WithinPeriodTimer::operator()(){
-			return !forceFalseState && ((stopwatch->now() - timePoint).count() < period);
+			return !forceFalseState && ((unsigned long long)(stopwatch->now() - timePoint).count() < period);
 		}
 	}
 }

@@ -16,10 +16,17 @@ namespace SI {
 			sf::Sprite backgroundSprite;
 			sf::Sprite pauseOverlaySprite;
 
-			sf::Sprite enemySprite1;
-			sf::Sprite enemySprite2;
+			sf::Sprite smallEnemySprite1;
+			sf::Sprite smallEnemySprite2;
 
-			sf::Sprite& getEnemySprite();
+			sf::Sprite& getSmallEnemySprite();
+
+			sf::Sprite bigEnemySprite1;
+			sf::Sprite bigEnemySprite2;
+			sf::Sprite bigEnemySprite3;
+			sf::Sprite bigEnemySprite4;
+
+			sf::Sprite& getBigEnemySprite();
 
 			sf::Sprite barrierSprite1;
 			sf::Sprite barrierSprite2;
@@ -43,7 +50,8 @@ namespace SI {
 
 			sf::Sprite powerupSprite;
 
-			Time::BinaryRepeatTimer alienAnimationDelay;
+			Time::PeriodCounter smallEnemyAnimationTimer;
+			Time::PeriodCounter bigEnemyAnimationTimer;
 
 			// Sounds:
 			sf::Sound playerFireSound;

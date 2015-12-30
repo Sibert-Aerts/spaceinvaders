@@ -4,9 +4,14 @@
 namespace SI {
 	namespace Md {
 
+		// An enum representing the states the model can be in
+		enum class ModelState {
+			running, paused, gameOver, levelSwitch
+		};
+
 		// An enum representing a type of event
 		enum EventType {
-			friendlyShotFired, enemyShotFired, bulletHit, friendlyHit, enemyHit, enemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
+			friendlyShotFired, enemyShotFired, bulletHit, friendlyHit, enemyHit, smallEnemyDestroyed, bigEnemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
 		};
 
 		// A struct representing type of event, and possibly its location
@@ -19,7 +24,7 @@ namespace SI {
 		
 		// An enum representing a crude abstraction of types of entities
 		enum EntityType {
-			player, enemy, playerBullet, enemyBullet, barrier, powerup
+			player, smallEnemy, bigEnemy, playerBullet, enemyBullet, barrier, powerup
 		};
 
 		// A struct representing all the data a view can know about an entity
@@ -38,13 +43,12 @@ namespace SI {
 		// ____VALUES_____________________
 
 			// Variables
+			std::string levelName;
 			unsigned int secondsPassed;
 			unsigned int lives;
-			bool gameOver;
+			ModelState state;
 			bool playerInvinc;
 			bool playerDead;
-			bool levelComplete;
-			bool paused;
 
 			// Debug variables
 			unsigned int entityCount;

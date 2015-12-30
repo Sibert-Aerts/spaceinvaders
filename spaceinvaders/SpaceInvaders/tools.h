@@ -30,5 +30,7 @@ namespace SI {
 	};
 
 
+	// A function that splits a line over a delimiter
+	std::vector<std::string> split(const std::string s, char delim);
 
 }

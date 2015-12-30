@@ -1,9 +1,12 @@
 #pragma once
 #include "StdAfx.h"
+#include "tools.h"
 #include "entity.h"
 
 namespace SI {
 	namespace Md {
+
+		class Entity;
 
 		class bad_parse_exception : public std::exception {
 		public:
@@ -34,10 +37,15 @@ namespace SI {
 			void parseEntity(const char * text, unsigned int x, unsigned int y);
 
 		public:
+			double speed, speedInc;
+			std::string name;
+
 			Level();
 
 			// Parse an entire file into a set of entities
-			void parseLevel(const char* fileName);
+			void parseLevel(std::ifstream& file);
+
+			std::string parseAttribute(std::string line, std::string attribute);
 
 			// Make a new entity vector based off the parsed levelEntities
 			// Note: Returns a unique vector of entities each time, only use once per level load

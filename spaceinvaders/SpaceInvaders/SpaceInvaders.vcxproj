@@ -211,6 +211,7 @@
     </ClCompile>
     <ClCompile Include="stopwatch.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="tools.cpp" />
     <ClCompile Include="view.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
