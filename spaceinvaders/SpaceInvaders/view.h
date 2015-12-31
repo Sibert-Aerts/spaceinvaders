@@ -53,7 +53,7 @@ namespace SI
 
 			void checkWindowEvents();
 
-			void updateEvents();
+			void drawEvents();
 
 			void makeParticleExplosion(double x, double y, double speed, unsigned int count, double size, double sized, sf::Color color = green3, double angle = 0.0, double time = 1.0);
 

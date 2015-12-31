@@ -77,7 +77,7 @@ namespace SI
 
 			checkWindowEvents();
 
-			updateEvents();
+			drawEvents();
 
 			tickParticles(dt);
 						
@@ -141,7 +141,7 @@ namespace SI
 			case Md::ModelState::gameOver:
 				window->draw(resources.pauseOverlaySprite);
 				drawCenteredShadedText("GAME OVER", 80, 300, green2, green1, 5);
-				drawCenteredShadedText("Press escape to retry", 30, 360, green2, green1, 3);
+				drawCenteredText("Press escape to retry", 30, 360, green1);
 				break;
 			case Md::ModelState::levelSwitch:
 				window->draw(resources.pauseOverlaySprite);
@@ -175,7 +175,7 @@ namespace SI
 			}
 		}
 
-		void View::updateEvents(){
+		void View::drawEvents(){
 			std::vector<Md::Event> events = payload->popEvents();
 			for (auto e : events) {
 				switch (e.type) {
@@ -226,7 +226,6 @@ namespace SI
 					// Play a gameOver song here or something...?
 					break;
 				}
-
 			}
 		}
 
@@ -269,8 +268,8 @@ namespace SI
 		}
 
 		void View::drawLives(){
-			if (payload->lives < 0)
-				throw(std::runtime_error("Attempted to draw negative player health."));
+			if ( payload->lives < 0 )
+				throw(std::runtime_error("Attempted to draw negative lives."));
 			for (unsigned int i = 0; i < payload->lives; ++i)
 				drawSprite(resources.lifeSprite, 320 + i * 60, 20);
 		}

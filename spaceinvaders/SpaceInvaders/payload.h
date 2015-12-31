@@ -45,7 +45,7 @@ namespace SI {
 			// Variables
 			std::string levelName;
 			unsigned int secondsPassed;
-			unsigned int lives;
+			int lives;
 			ModelState state;
 			bool playerInvinc;
 			bool playerDead;

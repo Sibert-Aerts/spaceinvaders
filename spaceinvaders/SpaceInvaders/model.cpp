@@ -163,31 +163,31 @@ namespace SI {
 				switch (input){
 
 				case Ctrl::shoot:
-					if (!stopwatch->isPaused() && !playerDeadTimer())
+					if (state == ModelState::running && !playerDeadTimer())
 						player->shoot();
-					if (stopwatch->isPaused() && !levelSwitchTimer()) {
+					if (state == ModelState::paused && !levelSwitchTimer()) {
 						completeLevel();
 						std::cout << "SKIPPING LEVEL" << std::endl;
 					}
 					break;
 
 				case Ctrl::left:
-					if (!stopwatch->isPaused() && !playerDeadTimer())
+					if (state == ModelState::running && !playerDeadTimer())
 						player->moveLeft(dt);
 					break;
 
 				case Ctrl::right:
-					if (!stopwatch->isPaused() && !playerDeadTimer())
+					if (state == ModelState::running && !playerDeadTimer())
 						player->moveRight(dt);
 					break;
 
 				case Ctrl::pause:
 					if (pauseTimer()) {	// Rid me of this filthy thing, and this whole damn switch case!!!!!!!	
-						if (stopwatch->isPaused() && (state == ModelState::paused)) {					// If paused, escape unpauses
+						if (state == ModelState::paused) {					// If paused, escape unpauses
 							stopwatch->unPause();
 							state = payload->state = ModelState::running;
 							payload->addEvent(unPaused);
-						} else if (!stopwatch->isPaused() && (state == ModelState::running) ){										// If unpaused, escape pauses
+						} else if (state == ModelState::running){										// If unpaused, escape pauses
 							stopwatch->pause();
 							state = payload->state = ModelState::paused;
 							payload->addEvent(paused);
