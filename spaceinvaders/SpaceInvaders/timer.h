@@ -16,6 +16,7 @@ namespace SI {
 		public:
 			PeriodTimer(double period, std::shared_ptr<Stopwatch> stopwatch = GlobalStopwatch::getInstance());
 
+			double PeriodTimer::getPeriod() const;
 			virtual void setPeriod(double period);
 
 			// Equivalent to making a new PeriodTimer with the same period

@@ -6,7 +6,7 @@ namespace SI {
 	namespace Vw {
 
 
-
+		// Particle 
 
 		Particle::Particle(double x, double y, double xvel, double yvel, double size, double sized, double lifeTime, sf::Color color) :
 			x(x), y(y), xvel(xvel), yvel(yvel), size(size), sized(sized), aliveTimer(lifeTime), color(color)
@@ -14,6 +14,22 @@ namespace SI {
 
 		bool Particle::alive(){
 			return (aliveTimer() && size > 0);
+		}
+
+		double Particle::getX(){
+			return x;
+		}
+
+		double Particle::getY(){
+			return y;
+		}
+
+		double Particle::getSize(){
+			return size;
+		}
+
+		sf::Color Particle::getColor(){
+			return color;
 		}
 
 		void Particle::tick(double dt){
@@ -24,5 +40,15 @@ namespace SI {
 			size += sized * dt;
 		}
 
+		// TextParticle : Particle
+
+		TextParticle::TextParticle(std::string text, double x, double y, double xvel, double yvel, double lifeTime, sf::Color color) : 
+			Particle(x, y, xvel, yvel, 10.0, 0.0, lifeTime, color), text(text)
+		{}
+
+		std::string TextParticle::getText(){
+			return text;
+		}
+		
 	}
 }

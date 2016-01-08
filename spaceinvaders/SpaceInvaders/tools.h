@@ -33,4 +33,9 @@ namespace SI {
 	// A function that splits a line over a delimiter
 	std::vector<std::string> split(const std::string s, char delim);
 
+
+	// Round a value x to the closest multiple of y
+	// Used for aligning to the fake pixel grid
+	double align(double x, double y);
+
 }

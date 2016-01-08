@@ -13,17 +13,25 @@ namespace SI {
 
 		// An enum representing a type of event
 		enum EventType {
-			friendlyShotFired, enemyShotFired, bulletHit, friendlyHit, enemyHit, smallEnemyDestroyed, bigEnemyDestroyed, barrierHit, barrierDestroyed, paused, unPaused, gameOver
+			friendlyShotFired, enemyShotFired, bulletHit, friendlyHit, enemyHit, smallEnemyDestroyed, bigEnemyDestroyed, 
+			barrierHit, barrierDestroyed, pickup, 
+			paused, unPaused, gameOver
 		};
 
 		// A struct representing type of event, and possibly its location
 		struct Event {
+		protected:
 			double x, y;
 			EventType type;
-
-			Event(EventType type, double x = 0, double y = 0);
+			std::string text;
+		public:
+			Event(EventType type, double x = 0, double y = 0, std::string text = "");
+			double getX();
+			double getY();
+			EventType getType();
+			std::string getText();
 		};
-		
+				
 		// An enum representing a crude abstraction of types of entities
 		enum EntityType {
 			player, smallEnemy, bigEnemy, playerBullet, enemyBullet, barrier, powerup

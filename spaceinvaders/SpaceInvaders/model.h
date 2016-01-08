@@ -128,10 +128,14 @@ namespace SI {
 			// Read and act according to the given inputs
 			void tickInput(double dt);
 
-			// Advance a bullet by a single step
+			// Advance a bullet by a single step and check collissions
 			void tickBullet(double dt, std::shared_ptr<Bullet> e, std::vector<std::shared_ptr<Enemy>> enemies, std::vector<std::shared_ptr<Barrier>> barriers);
 
+			// Advance an enemy by a single step and check collissions
 			void tickEnemy(double dt, std::shared_ptr<Enemy> e, std::vector<std::shared_ptr<Barrier>> barriers);
+
+			// Advance a powerup by a single step and check collissions
+			void tickPowerup(double dt, std::shared_ptr<Powerup> e);
 
 			// Register a new entity to the simulation
 			void addEvent(Event& e);

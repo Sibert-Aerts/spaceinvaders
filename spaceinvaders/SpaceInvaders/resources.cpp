@@ -5,7 +5,8 @@ namespace SI {
 	namespace Vw {
 		Resources::Resources(std::shared_ptr<Time::Stopwatch> stopwatch) :
 			smallEnemyAnimationTimer(0.5, stopwatch),
-			bigEnemyAnimationTimer(0.2, stopwatch)
+			bigEnemyAnimationTimer(0.2, stopwatch),
+			powerupAnimationTimer(0.05, stopwatch)
 		{
 			// Load font
 			if (!font8BitOperator.loadFromFile("Assets\\8bitOperatorPlus-Bold.ttf"))
@@ -30,6 +31,8 @@ namespace SI {
 			loadSprite(spriteSheetTexture, playerSprite,		0, 0, 2, 1);
 			loadSprite(spriteSheetTexture, playerBulletSprite1, 2, 0, 1, 1);
 			loadSprite(spriteSheetTexture, playerBulletSprite2, 3, 0, 1, 1);
+			loadSprite(spriteSheetTexture, playerBulletSprite3, 4, 0, 1, 1);
+			loadSprite(spriteSheetTexture, playerBulletSprite4, 5, 0, 1, 1);
 
 			loadSprite(spriteSheetTexture, smallEnemySprite1,	0, 1, 2, 1);
 			loadSprite(spriteSheetTexture, enemyBulletSprite1,	2, 1, 1, 1);
@@ -37,7 +40,8 @@ namespace SI {
 
 			loadSprite(spriteSheetTexture, smallEnemySprite2,	0, 2, 2, 1);
 			loadSprite(spriteSheetTexture, lifeSprite,			2, 2, 1, 1);
-			loadSprite(spriteSheetTexture, powerupSprite,		3, 2, 1, 1);
+			loadSprite(spriteSheetTexture, powerupSprite1,		3, 2, 1, 1);
+			loadSprite(spriteSheetTexture, powerupSprite2,		4, 2, 1, 1);
 
 			loadSprite(spriteSheetTexture, barrierSprite1,		0, 3, 1, 1);
 			loadSprite(spriteSheetTexture, barrierSprite2,		1, 3, 1, 1);
@@ -57,10 +61,24 @@ namespace SI {
 			loadSound(barrierHitSoundBuffer, barrierHitSound, "Assets\\sounds\\barrierHit.wav");
 			loadSound(barrierDestroySoundBuffer, barrierDestroySound, "Assets\\sounds\\barrierDestroyed.wav");
 			loadSound(pauseSoundBuffer, pauseSound, "Assets\\sounds\\pause.wav");
+			loadSound(pickupSoundBuffer, pickupSound, "Assets\\sounds\\powerup.wav");
 
 			enemyHitSound = barrierDestroySound;
 			enemyHitSound.setPitch(2.0f);
 			enemyHitSound.setVolume(75.0f);
+		}
+
+
+		sf::Font & Resources::getFont(){
+			return font8BitOperator;
+		}
+
+		sf::Sprite & Resources::getBackgroundSprite(){
+			return backgroundSprite;
+		}
+
+		sf::Sprite & Resources::getPauseOverlaySprite() {
+			return pauseOverlaySprite;
 		}
 
 		sf::Sprite & Resources::getSmallEnemySprite()
@@ -128,11 +146,33 @@ namespace SI {
 				// Todo: turn that into a bad_draw_error or something
 			case 1:
 				return playerBulletSprite1;
-			default:	// 2 or more
+			case 2:
 				return playerBulletSprite2;
+			case 3:
+				return playerBulletSprite3;
+			default:	// 4 or more
+				return playerBulletSprite4;
 
 			}
 		}
+
+		sf::Sprite & Resources::getPlayerSprite() {
+			return playerSprite;
+		}
+
+		sf::Sprite & Resources::getLifeSprite() {
+			return lifeSprite;
+		}
+
+		sf::Sprite & Resources::getPowerupSprite() {
+			switch (powerupAnimationTimer.getCount() % 2) {
+			case 0:
+				return powerupSprite1;
+			default:
+				return powerupSprite2;
+			}
+		}
+
 
 
 		// Private:

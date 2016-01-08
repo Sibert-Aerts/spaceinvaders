@@ -6,8 +6,24 @@ namespace SI {
 
 		// Event
 
-		Event::Event(EventType type, double x, double y) :
-			type(type), x(x), y(y) {}
+		Event::Event(EventType type, double x, double y, std::string text) :
+			type(type), x(x), y(y), text(text) {}
+
+		double Event::getX(){
+			return x;
+		}
+
+		double Event::getY(){
+			return y;
+		}
+
+		EventType Event::getType(){
+			return type;
+		}
+
+		std::string Event::getText(){
+			return text;
+		}
 		
 		// Payload
 

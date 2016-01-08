@@ -78,6 +78,8 @@ namespace SI
 			// Create a randomised set of particles to simulate an explosion
 			void makeRandomParticleExplosion(double x, double y, double speed, double speedVar, unsigned int count, double size, double sizeVar, double sized, sf::Color color, double time, double timeVar);
 
+			void makeTextParticle(std::string text, double x, double y);
+
 			// Tick every particle
 			void tickParticles(double dt);
 			
@@ -96,6 +98,7 @@ namespace SI
 			void drawPlayerBullet(std::shared_ptr<Md::EntityObserver> e);
 			void drawEnemyBullet(std::shared_ptr<Md::EntityObserver> e);
 			void drawBarrier(std::shared_ptr<Md::EntityObserver> e);
+			void drawPowerup(std::shared_ptr<Md::EntityObserver> e);
 			
 				// Text:
 			void drawText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position);

@@ -14,17 +14,6 @@ namespace SI
 		const sf::Color green2(139, 172, 15);
 		const sf::Color green3(169, 202, 30);
 		
-		// Helper functions
-		
-		// Round a value x to the closest multiple of y
-		// Used for aligning to the fake pixel grid
-		double align(double x, double y) {
-			double fmod = std::fmod(x, y);
-			if (fmod > y / 2)
-				return x - fmod + y;
-			return x - fmod;
-		}
-
 	// View
 
 		View::View(double tickPeriod) :
@@ -62,7 +51,7 @@ namespace SI
 				// Game elements:
 
 			// Draw the background
-			window->draw(resources.backgroundSprite);
+			window->draw(resources.getBackgroundSprite());
 			
 			// Draw the entities
 			for (std::shared_ptr<Md::EntityObserver> e : observer->getEntityObservers()) {
@@ -86,8 +75,7 @@ namespace SI
 					drawBarrier(e);
 					break;
 				case Md::EntityType::powerup:
-					drawPlayer(e);
-
+					drawPowerup(e);
 				}
 			}
 
@@ -108,18 +96,18 @@ namespace SI
 			case Md::ModelState::running:
 				break;
 			case Md::ModelState::paused:
-				window->draw(resources.pauseOverlaySprite);
+				window->draw(resources.getPauseOverlaySprite());
 				drawCenteredShadedText(observer->getLevelName(), 50, 160, green3, green0, 5);
 				drawCenteredShadedText("PAUSED", 80, 300, green2, green1, 5);
 				drawCenteredText("Press escape to unpause", 30, 360, green1);
 				break;
 			case Md::ModelState::gameOver:
-				window->draw(resources.pauseOverlaySprite);
+				window->draw(resources.getPauseOverlaySprite());
 				drawCenteredShadedText("GAME OVER", 80, 300, green2, green1, 5);
 				drawCenteredText("Press escape to retry", 30, 360, green1);
 				break;
 			case Md::ModelState::levelSwitch:
-				window->draw(resources.pauseOverlaySprite);
+				window->draw(resources.getPauseOverlaySprite());
 				drawCenteredShadedText("LEVEL COMPLETE", 80, 300, green2, green1, 5);
 				drawCenteredText("Next level: " + observer->getLevelName(), 30, 360, green1);
 				break;
@@ -161,7 +149,7 @@ namespace SI
 		void View::drawEvents(){
 			std::vector<Md::Event> events = observer->popEvents();
 			for (auto e : events) {
-				switch (e.type) {
+				switch (e.getType()) {
 				case Md::EventType::friendlyShotFired:
 					resources.playerFireSound.play();
 					break;
@@ -169,34 +157,39 @@ namespace SI
 					resources.enemyFireSound.play();
 					break;
 				case Md::EventType::bulletHit:
-					makeParticleExplosion(e.x, e.y, 400, 4, 10, -30, green2, std::_Pi / 4);
+					makeParticleExplosion(e.getX(), e.getY(), 400, 4, 10, -30, green2, std::_Pi / 4);
 					break;
 				case Md::EventType::friendlyHit:
 					resources.playerHitSound.play();
-					makeParticleExplosion(e.x, e.y, 400, 16, 20, -40);
+					makeParticleExplosion(e.getX(), e.getY(), 400, 16, 20, -40);
 					break;
 				case Md::EventType::enemyHit:
 					resources.enemyHitSound.play();
 					break;
 				case Md::EventType::smallEnemyDestroyed:
 					resources.enemyDestroyedSound.play();
-					makeParticleExplosion(e.x, e.y, 150, 16, 10, -5, green1);
-					makeParticleExplosion(e.x, e.y, 100, 8, 15, -10, green2);
+					makeParticleExplosion(e.getX(), e.getY(), 150, 16, 10, -5, green1);
+					makeParticleExplosion(e.getX(), e.getY(), 100, 8, 15, -10, green2);
 					break;
 				case Md::EventType::bigEnemyDestroyed:
 					resources.enemyDestroyedSound.play();
-					makeRandomParticleExplosion(e.x, e.y, 75, 50, 16, 20, 5, -15, green0, 3.0, 0.0);
-					makeRandomParticleExplosion(e.x, e.y, 250, 100, 8, 3, 0, 0, green3, 1.0, 0.3);
-					makeParticleExplosion(e.x, e.y, 150, 16, 12, -5, green1, 0.0, 1.2);
-					makeParticleExplosion(e.x, e.y, 75, 8, 25, -20, green2, 0.0, 1.5);
+					makeRandomParticleExplosion(e.getX(), e.getY(), 75, 50, 16, 20, 5, -15, green0, 3.0, 0.0);
+					makeRandomParticleExplosion(e.getX(), e.getY(), 250, 100, 8, 3, 0, 0, green3, 1.0, 0.3);
+					makeParticleExplosion(e.getX(), e.getY(), 150, 16, 12, -5, green1, 0.0, 1.2);
+					makeParticleExplosion(e.getX(), e.getY(), 75, 8, 25, -20, green2, 0.0, 1.5);
 					break;
 				case Md::EventType::barrierHit:
 					resources.barrierHitSound.play();
 					break;
 				case Md::EventType::barrierDestroyed:
 					resources.barrierDestroySound.play();
-					makeParticleExplosion(e.x, e.y, 150, 8, 15, -6, green1, std::_Pi / 8);
-					makeParticleExplosion(e.x, e.y, 100, 8, 20, -10, green0);
+					makeParticleExplosion(e.getX(), e.getY(), 150, 8, 15, -6, green1, std::_Pi / 8);
+					makeParticleExplosion(e.getX(), e.getY(), 100, 8, 20, -10, green0);
+					break;
+				case Md::EventType::pickup:
+					makeParticleExplosion(e.getX(), e.getY(), 600, 4, 10, -30, green3);
+					makeTextParticle(e.getText(), e.getX(), e.getY());
+					resources.pickupSound.play();
 					break;
 				case Md::EventType::paused:
 					resources.pauseSound.play();
@@ -226,6 +219,10 @@ namespace SI
 				}
 			}
 
+		void View::makeTextParticle(std::string text, double x, double y){
+			particles.push_back(std::make_shared<TextParticle>(text, x, y, 0.0, -40.0, 2.0, green3));
+		}
+
 		void View::tickParticles(double dt){
 			std::vector<std::shared_ptr<Particle>> dead;
 			for (auto& particle : particles) {
@@ -244,8 +241,13 @@ namespace SI
 
 		void View::drawParticles() {
 			for (auto& p : particles) {
-				float size = (float)align(p->size, 5.0f);
-				drawRectangle(size, size, p->color, align(p->x - size / 2, 5.0f) , align(p->y - size / 2, 5.0f));
+				if (auto& e = std::dynamic_pointer_cast<TextParticle>(p)) {
+					drawShadedText(e->getText(), 40, e->getColor(), sf::Vector2f((float)e->getX(), (float)e->getY()), 5);
+				}
+				else {
+					float size = (float)align(p->getSize(), 5.0f);
+					drawRectangle(size, size, p->getColor(), align(p->getX() - size / 2, 5.0f), align(p->getY() - size / 2, 5.0f));
+				}
 			}
 		}
 
@@ -254,7 +256,7 @@ namespace SI
 			if (lives < 0 )
 				throw(std::runtime_error("Attempted to draw negative lives."));
 			for (int i = 0; i < lives; ++i)
-				drawSprite(resources.lifeSprite, 320 + i * 60, 20);
+				drawSprite(resources.getLifeSprite(), 320 + i * 60, 20);
 		}
 
 		void View::drawSprite(sf::Sprite& sprite, double x, double y) {
@@ -266,7 +268,7 @@ namespace SI
 			if((flickerCounter.getCount()%2 || !observer->isPlayerInvinc() )&& !observer->isPlayerDead() )	
 				// Don't draw the player if he's dead
 				// Don't draw the player if he's invincible and the flicker state is on
-				drawSprite(resources.playerSprite, e->getXpos() - 40, e->getYpos() - 20);
+				drawSprite(resources.getPlayerSprite(), e->getXpos() - 40, e->getYpos() - 20);
 		}
 
 		void View::drawPlayerBullet(std::shared_ptr<Md::EntityObserver> e) {
@@ -289,9 +291,13 @@ namespace SI
 			drawSprite(resources.getBarrierSprite(e->getHealth()), e->getXpos() - 20, e->getYpos() - 20);
 		}
 
+		void View::drawPowerup(std::shared_ptr<Md::EntityObserver> e){
+			drawSprite(resources.getPowerupSprite(), e->getXpos() - 20, e->getYpos() - 20);
+		}
+
 		void View::drawText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position) {
 			sf::Text t;
-			t.setFont(resources.font8BitOperator);
+			t.setFont(resources.getFont());
 			t.setString(text);
 			t.setCharacterSize(size);
 			t.setColor(color);
@@ -301,7 +307,7 @@ namespace SI
 
 		void View::drawShadedText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position, int shadeDistance, sf::Color shadeColor){
 			sf::Text t;
-			t.setFont(resources.font8BitOperator);
+			t.setFont(resources.getFont());
 			t.setString(text);
 			t.setCharacterSize(size);
 
@@ -316,7 +322,7 @@ namespace SI
 
 		void View::drawCenteredText(std::string text, unsigned int size, double ypos, sf::Color color){
 			sf::Text t;
-			t.setFont(resources.font8BitOperator);
+			t.setFont(resources.getFont());
 			t.setString(text);
 			t.setCharacterSize(size);
 
@@ -331,7 +337,7 @@ namespace SI
 
 		void View::drawCenteredShadedText(std::string text, unsigned int size, double ypos, sf::Color color, sf::Color shade, int shadeDistance) {
 			sf::Text t;
-			t.setFont(resources.font8BitOperator);
+			t.setFont(resources.getFont());
 			t.setString(text);
 			t.setCharacterSize(size);
 			t.setColor(shade);

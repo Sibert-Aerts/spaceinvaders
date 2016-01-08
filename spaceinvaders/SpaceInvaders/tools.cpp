@@ -13,4 +13,11 @@ namespace SI {
 		return out;
 	}
 
+	double align(double x, double y) {
+		double fmod = std::fmod(x, y);
+		if (fmod > y / 2)
+			return x - fmod + y;
+		return x - fmod;
+	}
+
 }

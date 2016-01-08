@@ -68,10 +68,19 @@ namespace SI
 		public:
 			Time::BinaryRepeatTimer fireCooldown;
 			double speed;
+			double speedUpVal;
 			double bulletSpeed;
+			double bulletSpeedUpVal;
 			int bulletDmg;
+			int bulletDmgUpVal;
 
 			Player(double x, double y, std::shared_ptr<Time::Stopwatch> stopwatch);
+
+			void speedUp();
+			void bulletSpeedUp();
+			void damageUp();
+			void fireRateUp();
+			void resetPowerups();
 
 			void shoot();
 
@@ -119,6 +128,7 @@ namespace SI
 		class EnemyCluster {
 		private:
 			Model* model;
+			Time::WithinPeriodTimer frozen;
 
 			std::vector<std::shared_ptr<Enemy>> enemies;
 			unsigned int initialCount;
@@ -144,6 +154,7 @@ namespace SI
 			double lowestPoint();
 
 			void tick(double dt);
+			void freeze();
 
 		};
 
@@ -181,6 +192,23 @@ namespace SI
 			EnemyBullet(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, int health = 1);
 
 			void hurt(std::shared_ptr<Player> e);
+		};
+
+		// A type of powerup
+		enum PowerupType {
+			slowdown, speedUp, fireRateUp, bulletSpeedUp, damageUp
+		};
+
+		// A powerup
+		class Powerup : public Entity {
+		protected:
+			double yvel;
+		public:
+			Powerup(double xpos, double ypos);
+
+			PowerupType getPowerupType();
+
+			void tick(double dt);
 		};
 	}
 }

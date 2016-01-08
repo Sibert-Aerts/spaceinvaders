@@ -11,7 +11,11 @@ namespace SI {
 			timePoint(std::chrono::high_resolution_clock::now()),
 			stopwatch(stopwatch) {}
 
-		void PeriodTimer::setPeriod(double period){
+		double PeriodTimer::getPeriod() const {
+			return (double)this->period / 1e9f;
+		}
+
+		void PeriodTimer::setPeriod(double period) {
 			this->period = (unsigned long long)(period * 1e9f);
 		}
 

@@ -92,14 +92,37 @@ namespace SI {
 
 		Player::Player(double x, double y, std::shared_ptr<Time::Stopwatch> stopwatch) :
 			Entity( EntityType::player, x, y, 28.0f, 3),
-			fireCooldown(0.4f, stopwatch),
+			fireCooldown(0.4, stopwatch),
 			speed(200), 
-			bulletSpeed(400.0f), bulletDmg(1)
+			bulletSpeed(400.0), bulletDmg(1)
 		{}
+		
+		void Player::speedUp(){
+			speedUpVal += 50.0;
+		}
+
+		void Player::bulletSpeedUp(){
+			bulletSpeedUpVal += 200.0;
+		}
+
+		void Player::damageUp()	{
+			bulletDmgUpVal++;
+		}
+
+		void Player::fireRateUp(){
+			fireCooldown.setPeriod(fireCooldown.getPeriod()*0.75);
+		}
+
+		void Player::resetPowerups(){
+			speedUpVal = 0;
+			bulletSpeedUpVal = 0;
+			bulletDmgUpVal = 0;
+			fireCooldown.setPeriod(0.4);
+		}
 
 		void Player::shoot(){
 			if (fireCooldown()) {
-				model->addEntity(std::make_shared<Md::PlayerBullet>(xpos, ypos, 0, -bulletSpeed, 0, -200, bulletDmg));
+				model->addEntity(std::make_shared<Md::PlayerBullet>(xpos, ypos, 0, -(bulletSpeed + bulletSpeedUpVal), 0, -200, bulletDmg + bulletDmgUpVal));
 				model->addEvent(Event(friendlyShotFired));
 			}
 		}
@@ -109,7 +132,7 @@ namespace SI {
 				xpos = 50.0f;
 				return;
 			}
-			xpos -= dt * speed;
+			xpos -= dt * (speed + speedUpVal);
 			updatePosition();
 		}
 
@@ -118,7 +141,7 @@ namespace SI {
 				xpos = 750.0f;
 				return;
 			}
-			xpos += dt * speed;
+			xpos += dt * (speed + speedUpVal);
 			updatePosition();
 		}
 
@@ -233,6 +256,8 @@ namespace SI {
 
 		void SmallEnemy::destroyEvent(){
 			model->addEvent(Event(smallEnemyDestroyed, xpos, ypos));
+			if (rng->chanceOutOf(1, 8))
+				model->addEntity(std::make_shared<Md::Powerup>(xpos, ypos));
 		}
 
 		// BigEnemy : Enemy
@@ -253,6 +278,8 @@ namespace SI {
 
 		void BigEnemy::destroyEvent(){
 			model->addEvent(Event(bigEnemyDestroyed, xpos, ypos));
+			if (rng->chanceOutOf(1, 2))
+				model->addEntity(std::make_shared<Md::Powerup>(xpos, ypos));
 		}
 
 		// EnemyCluster
@@ -280,7 +307,7 @@ namespace SI {
 		}
 
 		EnemyCluster::EnemyCluster(std::shared_ptr<Time::Stopwatch> stopwatch) :
-			xDir(true), yDistance(-1.0f), initialCount(0){}
+			xDir(true), yDistance(-1.0f), initialCount(0), frozen(3.0, true, stopwatch){}
 
 		void EnemyCluster::setSpeed(double speed, double speedInc){
 			this->speed = speed;
@@ -309,6 +336,8 @@ namespace SI {
 		void EnemyCluster::tick(double dt){
 			if (!initialCount)
 				initialCount = count();
+			if (frozen())
+				return;
 			double vel = speed + (initialCount - count()) * speedInc;
 			double xd(0.0f), yd(0.0f);
 			if (yDistance < 0) {
@@ -332,6 +361,35 @@ namespace SI {
 				enemy->setX(enemy->getX() + xd);
 				enemy->updatePosition();
 			}
+		}
+
+		void EnemyCluster::freeze(){
+			frozen.reset();
+		}
+
+		// Powerup : Entity
+
+		Powerup::Powerup(double xpos, double ypos) : 
+			Entity(powerup, xpos, ypos, 10.0, 1), yvel(100.0)
+		{}
+
+		PowerupType Powerup::getPowerupType(){
+			auto& rng = RNG::RNG::getInstance();
+			if (rng->chanceOutOf(1, 5))	
+				return slowdown;
+			if (rng->chanceOutOf(1, 4))	
+				return speedUp;
+			if (rng->chanceOutOf(1, 3))	
+				return bulletSpeedUp;
+			if (rng->chanceOutOf(1, 2))	
+				return fireRateUp;
+			return damageUp;
+		}
+
+		void Powerup::tick(double dt){
+			ypos += yvel * dt;
+			yvel += 50.0 * dt;
+			updatePosition();
 		}
 	}
 }

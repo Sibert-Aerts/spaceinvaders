@@ -146,6 +146,7 @@ namespace SI {
 			std::vector<std::shared_ptr<Bullet>> bullets;
 			std::vector<std::shared_ptr<Enemy>> enemies;
 			std::vector<std::shared_ptr<Barrier>> barriers;
+			std::vector<std::shared_ptr<Powerup>> powerups;
 			
 			for (auto& entity : entities) {
 				if (auto& e = std::dynamic_pointer_cast<Bullet>(entity))
@@ -154,6 +155,8 @@ namespace SI {
 					enemies.push_back(e);
 				if (auto& e = std::dynamic_pointer_cast<Barrier>(entity))
 					barriers.push_back(e);
+				if (auto& e = std::dynamic_pointer_cast<Powerup>(entity))
+					powerups.push_back(e);
 			}
 			
 				// Tick all entities appropriately
@@ -163,6 +166,9 @@ namespace SI {
 
 			for (auto& e : enemies)
 				tickEnemy(dt, e, barriers);
+
+			for (auto& e : powerups)
+				tickPowerup(dt, e);
 
 			// Tick the enemy cluster
 			enemyCluster->tick(dt);
@@ -256,6 +262,35 @@ namespace SI {
 			}
 		}
 
+		void Model::tickPowerup(double dt, std::shared_ptr<Powerup> e){
+			e->tick(dt);
+			if (e->hit(player)) {
+				deleteEntity(e);
+				switch (e->getPowerupType()) {
+				case speedUp:
+					player->speedUp();
+					addEvent(Event(pickup, e->getX(), e->getY(), "SPEED UP!"));
+					break;
+				case bulletSpeedUp:
+					player->bulletSpeedUp();
+					addEvent(Event(pickup, e->getX(), e->getY(), "SHOT UP!"));
+					break;
+				case fireRateUp:
+					player->fireRateUp();
+					addEvent(Event(pickup, e->getX(), e->getY(), "FIRE UP!"));
+					break;
+				case damageUp:
+					player->damageUp();
+					addEvent(Event(pickup, e->getX(), e->getY(), "DMG UP!"));
+					break;
+				case slowdown:
+					enemyCluster->freeze();
+					addEvent(Event(pickup, e->getX(), e->getY(), "STOP!"));
+					break;
+				}
+			}
+		}
+
 		void Model::addEvent(Event& e){
 			for(auto& observer : observers)
 				observer->addEvent(e);
@@ -304,6 +339,7 @@ namespace SI {
 
 		void Model::playerSpawn() {
 			player->setX(400);
+			player->resetPowerups();
 			player->updatePosition();
 			playerDeadTimer.reset();
 			playerInvincTimer.reset();
