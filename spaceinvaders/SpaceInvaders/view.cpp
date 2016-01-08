@@ -5,9 +5,7 @@ namespace SI
 {
 	namespace Vw {
 
-		// VARIABLES (TODO: READ THESE FROM AN INI OR SOMETHING)
-
-		bool drawDebugText = true;	// Draw hitboxes or not
+		bool drawDebugText = true;	// Draw framerate & entity count
 
 		// Constant variables
 
@@ -18,29 +16,6 @@ namespace SI
 		
 		// Helper functions
 		
-		// Map entity shared pointers to a predefined set of colours
-		// Used for drawing debugEntities in different, consistent colours
-		sf::Color mapEntityToColor(const std::shared_ptr<Md::Entity>& e) {
-			static std::map<std::shared_ptr<Md::Entity>, sf::Color> map;
-
-			static std::vector<sf::Color> colors =
-			{ sf::Color(255,255,0),		sf::Color(0,255,255),	sf::Color(255,0,255),
-				sf::Color(255,128,128), sf::Color(128,255,128), sf::Color(128,128,255),
-				sf::Color(255,0,0),		sf::Color(0,255,0),		sf::Color(0,0,255),
-				sf::Color(255,128,0),	sf::Color(0,255,128),	sf::Color(128,0,255),
-				sf::Color(255,0,128),	sf::Color(128,255,0),	sf::Color(0,128,255), 
-			};
-
-			static unsigned int i(0);
-
-			if (map.find(e) == map.end()) {
-				map[e] = colors[i];
-				i = (i + 1) % colors.size();
-			}
-			
-			return map[e];
-		}
-
 		// Round a value x to the closest multiple of y
 		// Used for aligning to the fake pixel grid
 		double align(double x, double y) {
@@ -61,11 +36,11 @@ namespace SI
 		{
 			// Create window
 			window = std::make_shared<sf::RenderWindow>(sf::VideoMode(800, 720), "Space Invaders");
-
+			observer = std::make_shared<Md::ModelObserver>();
 		}
 
-		void View::registerPayload(std::shared_ptr<Md::Payload> payload) {
-			this->payload = payload;
+		std::shared_ptr<Md::ModelObserver> View::getObserver() {
+			return observer;
 		}
 
 		void View::update() {
@@ -90,8 +65,8 @@ namespace SI
 			window->draw(resources.backgroundSprite);
 			
 			// Draw the entities
-			for (std::shared_ptr<Md::PayloadEntity> e : payload->payloadEntities) {
-				switch (e->type) {
+			for (std::shared_ptr<Md::EntityObserver> e : observer->getEntityObservers()) {
+				switch (e->getType()) {
 				case Md::EntityType::player:
 					drawPlayer(e);
 					break;
@@ -125,16 +100,16 @@ namespace SI
 			drawLives();
 
 			// Draw the timer
-			std::string timerText = "TIME: " + std::to_string(payload->secondsPassed);
+			std::string timerText = "TIME: " + std::to_string(observer->getSecondsPassed());
 			drawShadedText(timerText, 20, green3, sf::Vector2f(680, 20), 2, green1);
 
 			// if game over, fade the screen and draw "GAME OVER"
-			switch (payload->state) {
+			switch (observer->getState()) {
 			case Md::ModelState::running:
 				break;
 			case Md::ModelState::paused:
 				window->draw(resources.pauseOverlaySprite);
-				drawCenteredShadedText(payload->levelName, 50, 160, green3, green0, 5);
+				drawCenteredShadedText(observer->getLevelName(), 50, 160, green3, green0, 5);
 				drawCenteredShadedText("PAUSED", 80, 300, green2, green1, 5);
 				drawCenteredText("Press escape to unpause", 30, 360, green1);
 				break;
@@ -146,7 +121,7 @@ namespace SI
 			case Md::ModelState::levelSwitch:
 				window->draw(resources.pauseOverlaySprite);
 				drawCenteredShadedText("LEVEL COMPLETE", 80, 300, green2, green1, 5);
-				drawCenteredText("Next level: " + payload->levelName, 30, 360, green1);
+				drawCenteredText("Next level: " + observer->getLevelName(), 30, 360, green1);
 				break;
 			}
 
@@ -154,12 +129,20 @@ namespace SI
 			if (drawDebugText) {
 				// Draw the framerate
 				double avg = avgFps(1 / dt);
-				std::string fpsText = "FPS: " + std::to_string(avg);
-				drawShadedText(fpsText, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4), 2);
+				std::string text = "FPS: " + std::to_string(avg);
+				drawShadedText(text, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4), 2);
 
 				// Draw the entity count
-				std::string entityText = "Entities: " + std::to_string(payload->entityCount);
-				drawShadedText(entityText, 12, sf::Color::Yellow, sf::Vector2f(4, 16), 2);
+				text = "Entities: " + std::to_string(observer->getEntityCount());
+				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 16), 2);
+
+				// Draw the entity count
+				text = "Entity Observers: " + std::to_string(observer->getEntityObservers().size());
+				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 28), 2);
+
+				// Draw the particle count
+				text = "Particles: " + std::to_string(particles.size());
+				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 40), 2);
 			}
 
 			window->display();
@@ -176,7 +159,7 @@ namespace SI
 		}
 
 		void View::drawEvents(){
-			std::vector<Md::Event> events = payload->popEvents();
+			std::vector<Md::Event> events = observer->popEvents();
 			for (auto e : events) {
 				switch (e.type) {
 				case Md::EventType::friendlyShotFired:
@@ -206,7 +189,6 @@ namespace SI
 					makeRandomParticleExplosion(e.x, e.y, 250, 100, 8, 3, 0, 0, green3, 1.0, 0.3);
 					makeParticleExplosion(e.x, e.y, 150, 16, 12, -5, green1, 0.0, 1.2);
 					makeParticleExplosion(e.x, e.y, 75, 8, 25, -20, green2, 0.0, 1.5);
-
 					break;
 				case Md::EventType::barrierHit:
 					resources.barrierHitSound.play();
@@ -268,9 +250,10 @@ namespace SI
 		}
 
 		void View::drawLives(){
-			if ( payload->lives < 0 )
+			int lives = observer->getLives();
+			if (lives < 0 )
 				throw(std::runtime_error("Attempted to draw negative lives."));
-			for (unsigned int i = 0; i < payload->lives; ++i)
+			for (int i = 0; i < lives; ++i)
 				drawSprite(resources.lifeSprite, 320 + i * 60, 20);
 		}
 
@@ -279,31 +262,31 @@ namespace SI
 			window->draw(sprite);
 		}
 
-		void View::drawPlayer(std::shared_ptr<Md::PayloadEntity> e) {
-			if((flickerCounter.getCount()%2 || !payload->playerInvinc )&& !payload->playerDead )	
+		void View::drawPlayer(std::shared_ptr<Md::EntityObserver> e) {
+			if((flickerCounter.getCount()%2 || !observer->isPlayerInvinc() )&& !observer->isPlayerDead() )	
 				// Don't draw the player if he's dead
 				// Don't draw the player if he's invincible and the flicker state is on
-				drawSprite(resources.playerSprite, e->xpos - 40, e->ypos - 20);
+				drawSprite(resources.playerSprite, e->getXpos() - 40, e->getYpos() - 20);
 		}
 
-		void View::drawPlayerBullet(std::shared_ptr<Md::PayloadEntity> e) {
-			drawSprite(resources.getPlayerBulletSprite(e->health), e->xpos - 20, e->ypos - 20);
+		void View::drawPlayerBullet(std::shared_ptr<Md::EntityObserver> e) {
+			drawSprite(resources.getPlayerBulletSprite(e->getHealth()), e->getXpos()- 20, e->getYpos() - 20);
 		}
 
-		void View::drawEnemyBullet(std::shared_ptr<Md::PayloadEntity> e) {
-			drawSprite(resources.getEnemyBulletSprite(e->health), e->xpos - 20, e->ypos - 20);
+		void View::drawEnemyBullet(std::shared_ptr<Md::EntityObserver> e) {
+			drawSprite(resources.getEnemyBulletSprite(e->getHealth()), e->getXpos() - 20, e->getYpos() - 20);
 		}
 
-		void View::drawSmallEnemy(std::shared_ptr<Md::PayloadEntity> e) {
-			drawSprite(resources.getSmallEnemySprite(), e->xpos - 40, e->ypos - 20);
+		void View::drawSmallEnemy(std::shared_ptr<Md::EntityObserver> e) {
+			drawSprite(resources.getSmallEnemySprite(), e->getXpos() - 40, e->getYpos() - 20);
 		}
 
-		void View::drawBigEnemy(std::shared_ptr<Md::PayloadEntity> e){
-			drawSprite(resources.getBigEnemySprite(), e->xpos - 40, e->ypos - 40);
+		void View::drawBigEnemy(std::shared_ptr<Md::EntityObserver> e){
+			drawSprite(resources.getBigEnemySprite(), e->getXpos() - 40, e->getYpos() - 40);
 		}
 		
-		void View::drawBarrier(std::shared_ptr<Md::PayloadEntity> e) {
-			drawSprite(resources.getBarrierSprite(e->health), e->xpos - 20, e->ypos - 20);
+		void View::drawBarrier(std::shared_ptr<Md::EntityObserver> e) {
+			drawSprite(resources.getBarrierSprite(e->getHealth()), e->getXpos() - 20, e->getYpos() - 20);
 		}
 
 		void View::drawText(std::string text, unsigned int size, sf::Color color, sf::Vector2f position) {
@@ -365,13 +348,6 @@ namespace SI
 			window->draw(t);
 		}
 
-		void View::drawCircle(float size, sf::Color color, double x, double y) {
-			sf::CircleShape shape(size);
-			shape.setFillColor(color);
-			shape.setPosition(sf::Vector2f((float)x - size, (float)y - size));
-			window->draw(shape);
-		}	
-		
 		void View::drawRectangle(float width, float height, sf::Color color, double x, double y) {
 			sf::RectangleShape shape(sf::Vector2f(width, height));
 			shape.setFillColor(color);

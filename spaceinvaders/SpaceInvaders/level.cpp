@@ -117,11 +117,7 @@ namespace SI {
 		LevelParser::LevelParser(){}
 
 		std::vector<std::shared_ptr<Level>> LevelParser::parseLevels(){
-
-			// Todo: replace this with a smarter system
-			std::vector<std::string> files = { "level0.txt" ,"level1.txt" ,"level2.txt","level3.txt","level4.txt"  };
-			std::string folder = "Assets\\levels\\";
-
+			
 			std::string prefix = "Assets\\levels\\level";
 			std::string suffix = ".txt";
 
@@ -147,7 +143,7 @@ namespace SI {
 					std::cout << "Level not added to queue." << std::endl << std::endl;
 				}
 			}
-			std::cout << out.size() << " levels successfuly enqued!";
+			std::cout << out.size() << " levels successfuly enqued!" << std::endl;
 			return out;
 		}
 

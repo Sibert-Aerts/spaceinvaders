@@ -5,13 +5,11 @@
 namespace SI {
 
 	namespace Md {
-
 		Model::Model(double tickPeriod) :
 			stopwatch(std::make_shared<Time::SimStopwatch>()),
 			updateTimer(tickPeriod),
 			counter(stopwatch),
 			pauseTimer(0.2f),
-			state(ModelState::running),
 			playerInvincTimer(3.0, true, stopwatch),
 			playerDeadTimer(2.0, true, stopwatch),
 			levelSwitchTimer(3.0, true),
@@ -19,21 +17,28 @@ namespace SI {
 		{
 			// Initialise the static Entity variable pointing to the model:
 			// Todo: make this less horrible in case of multiple Models running in tandem...?
-			Entity::model = this;
 
 			levelParser = std::make_unique<LevelParser>();
-			enemyCluster = std::make_unique<EnemyCluster>();
-
-			player = std::make_shared<Md::Player>(50, 640, "PLAYER 1", stopwatch);
-			payload = std::make_shared<Payload>();
+			enemyCluster = std::make_unique<EnemyCluster>(stopwatch);
 
 			levels = levelParser->parseLevels();
+		}
 
+		void Model::reset()	{
+			levelSwitchTimer.forceFalse();
+			playerDeadTimer.forceFalse();
+			playerInvincTimer.forceFalse();
+			updateState(ModelState::running);
+
+			player = std::make_shared<Md::Player>(50, 640, stopwatch);
+			updateLives(3);
+
+			currentLevel = 0;
 			loadLevel();
 		}
 
 		void Model::registerView(std::shared_ptr<Vw::View> view) {
-			view->registerPayload(payload);
+			observers.push_back(view->getObserver());
 		}
 
 		void Model::registerController(std::shared_ptr<Ctrl::Controller> controller) {
@@ -42,13 +47,43 @@ namespace SI {
 
 		void Model::clearEntities(){
 			entities.clear();
-			payload->payloadEntities.clear();
+			for(auto& observer : observers)
+				observer->clearEntities();
 		}
 
+		void Model::updateState(ModelState state){
+			this->state = state;
+			for (auto& observer : observers)
+				observer->updateState(state);
+		}
+
+		void Model::updateLives(int lives){
+			player->setHealth(lives);
+			for (auto& observer : observers)
+				observer->updateLives(lives);
+		}
+
+		void Model::updatePlayerState(){
+			for (auto& observer : observers) {
+				observer->updatePlayerDead(playerDeadTimer());
+				observer->updatePlayerInvinc(playerInvincTimer());
+			}
+		}
+
+		void Model::updateLevelName(){
+			for (auto& observer : observers)
+				observer->updateLevelName(levels[currentLevel]->name);
+		}
+
+		void Model::updateSecondsPassed(){
+			for (auto& observer : observers)
+				observer->updateSecondsPassed((unsigned int)counter.getSeconds());
+		}
+		
 		void Model::retryLevel(){
 			stopwatch->unPause();
-			player->health = 3;
-			state = payload->state = ModelState::running;
+			updateLives(3);
+			updateState(ModelState::running);
 			loadLevel();
 		}
 
@@ -58,8 +93,7 @@ namespace SI {
 			enemyCluster->clear();
 			enemyCluster->setSpeed(levels[currentLevel]->speed, levels[currentLevel]->speedInc);
 
-			payload->lives = player->health;
-			payload->levelName = levels[currentLevel]->name;
+			updateLevelName();
 			addEntity(player);
 			playerSpawn();
 			playerDeadTimer.forceFalse();
@@ -76,7 +110,7 @@ namespace SI {
 				return;
 			}
 			currentLevel++;
-			state = payload->state = ModelState::levelSwitch;
+			updateState(ModelState::levelSwitch);
 			stopwatch->pause();
 			levelSwitchTimer.reset();
 			loadLevel();
@@ -96,7 +130,7 @@ namespace SI {
 
 				// If we're in the LevelComplete state, check if we can leave the state, otherwise don't do anything
 			if (state == ModelState::levelSwitch && !levelSwitchTimer()) {
-				state = payload->state = ModelState::running;
+				updateState(ModelState::running);
 				stopwatch->unPause();
 			}
 
@@ -106,18 +140,14 @@ namespace SI {
 			// ____ THE FOLLOWING ONLY HAPPENS IF THE GAME IS UNPAUSED: ____________________
 
 				// Update the payload on time-related business
-			payload->playerDead = playerDeadTimer();
-			payload->playerInvinc = playerInvincTimer();
+			updatePlayerState();
 
 				// Separate the Entities
-			std::vector<std::shared_ptr<DebugEntity>> debugEntities;
 			std::vector<std::shared_ptr<Bullet>> bullets;
 			std::vector<std::shared_ptr<Enemy>> enemies;
 			std::vector<std::shared_ptr<Barrier>> barriers;
 			
 			for (auto& entity : entities) {
-				if (auto& e = std::dynamic_pointer_cast<DebugEntity>(entity))
-					debugEntities.push_back(e);
 				if (auto& e = std::dynamic_pointer_cast<Bullet>(entity))
 					bullets.push_back(e);
 				if (auto& e = std::dynamic_pointer_cast<Enemy>(entity))
@@ -127,10 +157,7 @@ namespace SI {
 			}
 			
 				// Tick all entities appropriately
-
-			for (auto& e : debugEntities)
-				e->tick(dt);
-
+			
 			for (auto& e : bullets)
 				tickBullet(dt, e, enemies, barriers);
 
@@ -146,14 +173,8 @@ namespace SI {
 
 			if (enemyCluster->count() == 0)
 				completeLevel();
-
-				// Collissions
-			if(debugEntities.size() > 1)
-				for (unsigned int i = 0; i < debugEntities.size() - 1; ++i)
-					for (unsigned int j = i + 1; j < debugEntities.size(); ++j)
-						debugEntities[i]->collide(debugEntities[j]);
-
-			payload->secondsPassed = (unsigned int)counter.getSeconds();
+			
+			updateSecondsPassed();
 
 		}
 
@@ -185,12 +206,12 @@ namespace SI {
 					if (pauseTimer()) {	// Rid me of this filthy thing, and this whole damn switch case!!!!!!!	
 						if (state == ModelState::paused) {					// If paused, escape unpauses
 							stopwatch->unPause();
-							state = payload->state = ModelState::running;
-							payload->addEvent(unPaused);
+							updateState(ModelState::running);
+							addEvent(Event(unPaused));
 						} else if (state == ModelState::running){										// If unpaused, escape pauses
 							stopwatch->pause();
-							state = payload->state = ModelState::paused;
-							payload->addEvent(paused);
+							updateState(ModelState::paused);
+							addEvent(Event(paused));
 						}
 					} else if (state == ModelState::gameOver) {			// If game over, escape retries the level
 						retryLevel();
@@ -213,12 +234,12 @@ namespace SI {
 				
 			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
 				if (p->hit(player) && !playerDeadTimer()) {
-					payload->addEvent(Event(bulletHit, e->xpos, e->ypos));
+					addEvent(Event(bulletHit, e->getX(), e->getY()));
 					deleteEntity(e);
 					playerHit();
 				}
 			}
-			if (e->ypos < 0 || e->ypos > 720 || e->isDead())
+			if (e->getX() < 0 || e->getY() > 720 || e->isDead())
 				deleteEntity(e);
 		}
 		
@@ -236,19 +257,22 @@ namespace SI {
 		}
 
 		void Model::addEvent(Event& e){
-			payload->addEvent(e);
+			for(auto& observer : observers)
+				observer->addEvent(e);
 		}
 
 		void Model::addEntity(std::shared_ptr<Entity> entity) {
 
+			entity->registerModel(this);
 			entities.push_back(entity);
 			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
 				enemyCluster->addEnemy(e);
 
-			auto pe = payload->addEntity();
-			entity->registerPayloadEntity(pe);
-
-			payload->entityCount = entities.size();
+			for (auto& observer : observers) {
+				auto pe = observer->addEntity();
+				entity->registerObserver(pe);
+				observer->updateEntityCount(entities.size());
+			}
 		}
 
 		void Model::deleteEntity(std::shared_ptr<Entity> entity){
@@ -257,20 +281,20 @@ namespace SI {
 			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
 				enemyCluster->deleteEnemy(e);
 
-			payload->deleteEntity(entity->payloadEntity);
-
-			payload->entityCount = entities.size();
+			for (unsigned int i = 0; i < observers.size(); ++i) {
+				observers[i]->deleteEntity(entity->getObservers()[i]);
+				observers[i]->updateEntityCount(entities.size());
+			}
 		}
 
 		void Model::playerHit(){
-			payload->addEvent(Event(EventType::friendlyHit, player->xpos, player->ypos));
+			addEvent(Event(EventType::friendlyHit, player->getX(), player->getY()));
 			
 			// Don't do anything if the player is invincible
 			if (playerInvincTimer())
 				return;
 
-			player->health--;
-			payload->lives = player->health;
+			updateLives(player->getHealth() - 1);
 			if (player->isDead()) {
 				gameOver();
 			}
@@ -279,7 +303,7 @@ namespace SI {
 		}
 
 		void Model::playerSpawn() {
-			player->xpos = 400;
+			player->setX(400);
 			player->updatePosition();
 			playerDeadTimer.reset();
 			playerInvincTimer.reset();
@@ -287,8 +311,8 @@ namespace SI {
 
 		void Model::gameOver() {
 			stopwatch->pause();
-			state = payload->state = ModelState::gameOver;
-			payload->addEvent(EventType::gameOver);
+			updateState(ModelState::gameOver);
+			addEvent(Event(EventType::gameOver));
 		}
 
 	};

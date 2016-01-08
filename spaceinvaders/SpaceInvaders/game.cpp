@@ -2,9 +2,8 @@
 #include "game.h"
 
 namespace SI {
-
-	// VARIABLES (TODO: READ THESE FROM AN INI OR SOMETHING)
 	
+	// Variable determining the minimum amount between 2 ticks in the model
 	double modelUpdateInterval = 0.001f;
 
 	Game::Game() : 
@@ -21,11 +20,11 @@ namespace SI {
 	}
 
 	void Game::run() {
+		model.reset();
 		while (true) {
 			controller->update();
 			model.tick();
 			tickViews();
-			std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		}
 	}
 

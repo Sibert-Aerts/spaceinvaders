@@ -4,6 +4,8 @@
 namespace SI {
 	namespace Md {
 
+		class Model;
+
 		// An enum representing the states the model can be in
 		enum class ModelState {
 			running, paused, gameOver, levelSwitch
@@ -28,20 +30,31 @@ namespace SI {
 		};
 
 		// A struct representing all the data a view can know about an entity
-		struct PayloadEntity {
+		class EntityObserver {
+		private:
 			EntityType type;
 			double xpos, ypos;
 			int health;
 
-			PayloadEntity();
+		public:
+			EntityObserver();
+
+			EntityType getType();
+			void setType(EntityType type);
+			double getXpos();
+			void setPos(double xpos, double ypos);
+			double getYpos();
+			int getHealth();
+			void setHealth(int health);
+
 		};
 
 
 		// A struct representing all the data a view can know about a model
-		struct Payload {
+		class ModelObserver {
 
 		// ____VALUES_____________________
-
+					
 			// Variables
 			std::string levelName;
 			unsigned int secondsPassed;
@@ -49,17 +62,32 @@ namespace SI {
 			ModelState state;
 			bool playerInvinc;
 			bool playerDead;
-
-			// Debug variables
-			unsigned int entityCount;
+			unsigned int entityCount;	// Debug
 
 			// Events, a series of enum values that indicate something happened
 			std::vector<Event> events;
 
 			// PayloadEntities, each individually updated by their unique entity
-			std::vector<std::shared_ptr<PayloadEntity>> payloadEntities;
+			std::vector<std::shared_ptr<EntityObserver>> entityObservers;
 
-		// ____METHODS_____________________
+		public:
+			std::string getLevelName();
+			void updateLevelName(std::string levelName);
+			unsigned int getSecondsPassed();
+			void updateSecondsPassed(unsigned int secondsPassed);
+			int getLives();
+			void updateLives (int lives);
+			ModelState getState();
+			void updateState (ModelState state);
+			bool isPlayerInvinc();
+			void updatePlayerInvinc(bool playerInvinc);
+			bool isPlayerDead();
+			void updatePlayerDead(bool playerDead);
+			unsigned int getEntityCount();
+			void updateEntityCount(unsigned int entityCount);
+
+
+			std::vector<std::shared_ptr<EntityObserver>>& getEntityObservers();
 
 			// Register an event
 			void addEvent(Event event);
@@ -67,13 +95,16 @@ namespace SI {
 			// Pop all stored events
 			std::vector<Event> popEvents();
 			
-			// Register and hand over a new entity
-			std::shared_ptr<PayloadEntity> addEntity();
+			// Start observing a new entity and return a pointer to its observer
+			std::shared_ptr<EntityObserver> addEntity();
 
 			// Remove an entity
-			void deleteEntity(std::shared_ptr<PayloadEntity> e);
+			void deleteEntity(std::shared_ptr<EntityObserver> e);
 
-			Payload();
+			// Clear all entities
+			void clearEntities();
+
+			ModelObserver();
 		};
 
 	}

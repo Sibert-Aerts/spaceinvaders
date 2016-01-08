@@ -15,31 +15,65 @@ namespace SI {
 
 		// Entity
 		
-		// static data member:
-		Model* Entity::model;
-
 		Entity::Entity(EntityType type, double xpos, double ypos, float size, int health) :
 			type(type), xpos(xpos), ypos(ypos), size(size), health(health) {
 		}
 
-		void Entity::registerPayloadEntity(std::shared_ptr<PayloadEntity> payloadEntity){
-			this->payloadEntity = payloadEntity;
-			payloadEntity->type = this->type;
+		void Entity::registerModel(Model * model){
+			this->model = model;
+		}
+
+		void Entity::registerObserver(std::shared_ptr<EntityObserver>& observer){
+			observers.push_back(observer);
+			observer->setType(type);
 			updatePosition();
 			updateHealth();
 		}
 
+		std::vector<std::shared_ptr<EntityObserver>>& Entity::getObservers(){
+			return observers;
+		}
+
+		double Entity::getX() {
+			return xpos;
+		}
+
+		double Entity::getY() {
+			return ypos;
+		}
+
+		void Entity::setX(double xpos) {
+			this->xpos = xpos;
+		}
+
+		void Entity::setY(double ypos) {
+			this->ypos = ypos;
+		}
+
+		float Entity::getSize() {
+			return size;
+		}
+
+		int Entity::getHealth() {
+			return health;
+		}
+
+		void Entity::setHealth(int health){
+			this->health = health;
+		}
+
 		void Entity::updatePosition(){
-			if (!payloadEntity)
-				throw(std::runtime_error("Entity does not have an assosicated PayloadEntity!"));
-			payloadEntity->xpos = this->xpos;
-			payloadEntity->ypos = this->ypos;
+			if (observers.empty())
+				throw(std::runtime_error("Entity does not have any associated observers!"));
+			for( auto& observer : observers)
+				observer->setPos(xpos, ypos);
 		}
 
 		void Entity::updateHealth(){
-			if (!payloadEntity)
-				throw(std::runtime_error("Entity does not have an assosicated PayloadEntity!"));
-			payloadEntity->health = this->health;
+			if (observers.empty())
+				throw(std::runtime_error("Entity does not have any associated observers!"));
+			for (auto& observer : observers)
+				observer->setHealth(health);
 		}
 
 		bool Entity::hit(std::shared_ptr<Entity> e) {
@@ -56,9 +90,8 @@ namespace SI {
 		
 		// Player : Entity
 
-		Player::Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch) :
+		Player::Player(double x, double y, std::shared_ptr<Time::Stopwatch> stopwatch) :
 			Entity( EntityType::player, x, y, 28.0f, 3),
-			name(name),
 			fireCooldown(0.4f, stopwatch),
 			speed(200), 
 			bulletSpeed(400.0f), bulletDmg(1)
@@ -107,17 +140,17 @@ namespace SI {
 
 		void Bullet::hurt(std::shared_ptr<Barrier> e){
 			model->addEvent(Event(bulletHit, xpos, ypos));
-			model->addEvent(Event(barrierHit, e->xpos, e->ypos));
+			model->addEvent(Event(barrierHit, e->getX(), e->getY()));
 
-			int min = std::min(health, e->health);
+			int min = std::min(health, e->getHealth());
 			health -= min;
-			e->health -= min;
+			e->setHealth(e->getHealth() - min);
 
 			updateHealth();
 			e->updateHealth();
 			if (e->isDead()) {
 				model->deleteEntity(e);
-				model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+				model->addEvent(Event(barrierDestroyed, e->getX(), e->getY()));
 			}
 		}
 
@@ -130,7 +163,7 @@ namespace SI {
 		void EnemyBullet::hurt(std::shared_ptr<Player> e){
 			model->addEvent(Event(bulletHit, xpos, ypos));
 			health = 0;
-			e->health -= 1;
+			e->setHealth(e->getHealth() - 1);
 
 			updateHealth();
 			e->updateHealth();
@@ -144,11 +177,11 @@ namespace SI {
 
 		void PlayerBullet::hurt(std::shared_ptr<Enemy> e){
 			model->addEvent(Event(bulletHit, xpos, ypos));
-			model->addEvent(Event(enemyHit, e->xpos, e->ypos));
+			model->addEvent(Event(enemyHit, e->getX(), e->getY()));
 
-			int min = std::min(health, e->health);
+			int min = std::min(health, e->getHealth());
 			health -= min;
-			e->health -= min;
+			e->setHealth(e->getHealth() - 1);
 
 			updateHealth();
 			e->updateHealth();
@@ -185,15 +218,15 @@ namespace SI {
 		}
 
 		void SmallEnemy::hurt(std::shared_ptr<Barrier> e){
-			int min = std::min(health, 1 + e->health / 2);	// Take at least 1 damage, + 1 damage for every 2 hp the barrier has
+			int min = std::min(health, 1 + e->getHealth() / 2);	// Take at least 1 damage, + 1 damage for every 2 hp the barrier has
 			health -= min;
-			model->addEvent(Event(bulletHit, (e->xpos+xpos)/2, (e->ypos + ypos) / 2));	// create an explosion between the barrier and alien
+			model->addEvent(Event(bulletHit, (e->getX()+xpos)/2, (e->getY() + ypos) / 2));	// create an explosion between the barrier and alien
 			updateHealth();
 			
-			e->health -= min * 2;
+			e->setHealth(e->getHealth() - min * 2);
 			if (e->isDead()) {
 				model->deleteEntity(e);
-				model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+				model->addEvent(Event(barrierDestroyed, e->getX(), e->getY()));
 			}
 			e->updateHealth();
 		}
@@ -213,70 +246,13 @@ namespace SI {
 
 		void BigEnemy::hurt(std::shared_ptr<Barrier> e){
 			// Straight-up destroy the barrier without taking damage
-			model->addEvent(Event(bulletHit, (e->xpos + xpos) / 2, (e->ypos + ypos) / 2));	// create an explosion between the barrier and alien
+			model->addEvent(Event(bulletHit, (e->getX() + xpos) / 2, (e->getY() + ypos) / 2));	// create an explosion between the barrier and alien
 			model->deleteEntity(e);
-			model->addEvent(Event(barrierDestroyed, e->xpos, e->ypos));
+			model->addEvent(Event(barrierDestroyed, e->getX(), e->getY()));
 		}
 
 		void BigEnemy::destroyEvent(){
 			model->addEvent(Event(bigEnemyDestroyed, xpos, ypos));
-		}
-
-		// DebugEntity : Entity
-
-		DebugEntity::DebugEntity(double xpos, double ypos, double xvel, double yvel, double xacc, double yacc, float size) :
-			Entity(EntityType::playerBullet, xpos, ypos),
-			xvel(xvel), yvel(yvel),
-			xacc(xacc), yacc(yacc),
-			size(size)
-		{}
-
-		void DebugEntity::tick(double dt) {
-			xvel += (dt * xacc);
-			yvel += (dt * yacc);
-			xpos += (dt * xvel);
-			ypos += (dt * yvel);
-
-			if (xpos < size) {
-				xacc = std::abs(xacc);
-				xvel = std::abs(xvel);
-			}else if (xpos > 800 - size) {
-				xacc = -std::abs(xacc);
-				xvel = -std::abs(xvel);
-			}
-
-			if (ypos < size) {
-				yacc = std::abs(yacc);
-				yvel = std::abs(yvel);
-			} else if (ypos > 720 - size) {
-				yacc = -std::abs(yacc);
-				yvel = -std::abs(yvel);
-			}
-
-			updatePosition();
-			// Jokes below
-			payloadEntity->type = (EntityType)((payloadEntity->type + 1) % 8);
-		}
-
-		bool DebugEntity::collide(std::shared_ptr<DebugEntity>& e) {
-			double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
-			double d = D - (size + e->size);
-			if (d > 0)
-				return false;
-
-			double tempx(xvel), tempy(yvel);
-			if (xpos < e->xpos)
-				xvel = elasticCollission(xvel, size*size, e->xvel, e->size*e->size);
-			yvel = elasticCollission(yvel, size*size, e->yvel, e->size*e->size);
-			e->xvel = elasticCollission(e->xvel, e->size*e->size, tempx, size*size);
-			e->yvel = elasticCollission(e->yvel, e->size*e->size, tempy, size*size);
-
-			// Attempt to stop them from clipping into each other
-			// But mostly just resulted in them doing weird things
-			// At least they didn't clip though.
-			xpos += d / D * (e->xpos - xpos);
-			ypos += d / D * (e->ypos - ypos);
-			return true;
 		}
 
 		// EnemyCluster
@@ -284,14 +260,14 @@ namespace SI {
 		double EnemyCluster::rightMostPoint() {
 			double right = std::numeric_limits<double>::min();
 			for (auto& enemy : enemies)
-				right = std::max(right, enemy->xpos + enemy->size);
+				right = std::max(right, enemy->getX() + enemy->getSize());
 			return right;
 		}
 
 		double EnemyCluster::leftMostPoint(){
 			double left = std::numeric_limits<double>::max();
 			for (auto& enemy : enemies)
-				left = std::min(left, enemy->xpos - enemy->size);
+				left = std::min(left, enemy->getX() - enemy->getSize());
 			return left;
 		}
 
@@ -299,11 +275,11 @@ namespace SI {
 			// Lowest actually means highest since y increases downwards
 			double low = std::numeric_limits<double>::min();
 			for (auto& enemy : enemies)
-				low = std::max(low, enemy->ypos + enemy->size);
+				low = std::max(low, enemy->getY() + enemy->getSize());
 			return low;
 		}
 
-		EnemyCluster::EnemyCluster() : 
+		EnemyCluster::EnemyCluster(std::shared_ptr<Time::Stopwatch> stopwatch) :
 			xDir(true), yDistance(-1.0f), initialCount(0){}
 
 		void EnemyCluster::setSpeed(double speed, double speedInc){
@@ -352,8 +328,8 @@ namespace SI {
 			}
 
 			for (auto& enemy : enemies){
-				enemy->ypos += yd;
-				enemy->xpos += xd;
+				enemy->setY( enemy->getY() + yd);
+				enemy->setX(enemy->getX() + xd);
 				enemy->updatePosition();
 			}
 		}

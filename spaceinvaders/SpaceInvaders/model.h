@@ -36,38 +36,75 @@ namespace SI {
 		class Model {
 
 		private:
-			// Data members
+				// Various:
+			// A timer that determines the minimum time between ticks
 			Time::BinaryRepeatTimer updateTimer;
 
+			// The controller
 			std::shared_ptr<Ctrl::Controller> controller;
+			
+			// The stopwatch used as a basis for the simulation, can be paused
 			std::shared_ptr<Time::SimStopwatch> stopwatch;
-
+			
+				// Level related:
+			// Parses levels
 			std::unique_ptr<LevelParser> levelParser;
+
+			// Index of the current level
 			unsigned int currentLevel;
+
+			// Set of parsed levels
 			std::vector<std::shared_ptr<Level>> levels;
-
-			std::vector<std::shared_ptr<Entity>> entities;
-			std::unique_ptr<EnemyCluster> enemyCluster;
-
-			std::shared_ptr<Player> player;
-			Time::WithinPeriodTimer playerInvincTimer;	// shove this timer into the player?
-			Time::WithinPeriodTimer playerDeadTimer;	// shove this timer into the player?
-
-			ModelState state;
-			Time::WithinPeriodTimer levelSwitchTimer;
-			Time::BinaryRepeatTimer pauseTimer;	// get rid of this sick filth
-
-			// The model's own payload
-			std::shared_ptr<Payload> payload;
 
 			// The counter keeping track of how long the level has gone on for
 			Time::Counter counter;
 
+				// Entity related:
+			// The entities handled by the model
+			std::vector<std::shared_ptr<Entity>> entities;
+
+			// A cluster of enemies
+			std::unique_ptr<EnemyCluster> enemyCluster;
+
+				// Player related:
+			// An additional pointer to the player entity
+			std::shared_ptr<Player> player;
+
+			// A timer that determines if the player is invincible
+			Time::WithinPeriodTimer playerInvincTimer;	// todo: shove this timer into the player?
+
+			// A timer that determines if the player is dead
+			Time::WithinPeriodTimer playerDeadTimer;	// todo: shove this timer into the player?
+
+				// State related:
+			// The current state of the player/model
+			ModelState state;
+
+			// A timer that determines if the level is switching
+			Time::WithinPeriodTimer levelSwitchTimer;
+
+			// A timer that determines if the game can be paused/unpaused (necessary because of lack of keyDown events)
+			Time::BinaryRepeatTimer pauseTimer;
+
+			// The model's observers
+			std::vector<std::shared_ptr<ModelObserver>> observers;
+
 		public:
 			Model(double tickPeriod = 0);
 
+			// Reset the model to its most basic state
+			// Has to be called at least once before the model can be used
+			void reset();
+
 			// Register a view
 			void registerView(std::shared_ptr<Vw::View> view);
+
+			// Update the observers on specific state changes
+			void updateState(ModelState state);
+			void updateLives(int lives);
+			void updatePlayerState();
+			void updateLevelName();
+			void updateSecondsPassed();
 
 			// Register the controller
 			void registerController(std::shared_ptr<Ctrl::Controller> controller);

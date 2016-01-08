@@ -12,7 +12,7 @@ namespace SI
 
 		// Resolve circular dependencies with included headers
 		class Model;
-		struct PayloadEntity;
+		class EntityObserver;
 		enum EntityType;
 
 		// Resolve circular dependencies within this header
@@ -30,19 +30,29 @@ namespace SI
 
 		// An abstract class for an Entity in the world
 		class Entity {
-		public:
-			static Model* model;
+		protected:
+			Model* model;
 
 			double xpos, ypos;
 			float size;
 			int health;
 			EntityType type;
-			std::shared_ptr<PayloadEntity> payloadEntity;
+			std::vector<std::shared_ptr<EntityObserver>> observers;
 
 		public:
 			Entity(EntityType type, double xpos = 0, double ypos = 0, float size = 10.0f, int health = 1);
 
-			virtual void registerPayloadEntity(std::shared_ptr<PayloadEntity> payloadEntity);
+			void registerModel(Model* model);
+			void registerObserver(std::shared_ptr<EntityObserver>& observer);
+			std::vector<std::shared_ptr<EntityObserver>>& getObservers();
+			
+			double getX();
+			void setX(double xpos);
+			double getY();
+			void setY(double ypos);
+			float getSize();
+			int getHealth();
+			void setHealth(int health);
 
 			void updatePosition();
 			void updateHealth();
@@ -52,34 +62,16 @@ namespace SI
 			virtual bool isDead();
 
 		};
-
-		// An entity that bounces around and collides with other DebugEntity
-		// Implemented to test the view-model system
-		class DebugEntity : public Entity {
-		public:
-			double xvel, yvel;
-			double xacc, yacc;
-			float size;
-
-		public:
-			DebugEntity(double xpos = 0, double ypos = 0, double xvel = 0, double yvel = 0, double xacc = 0, double yacc = 0, float size = 20.0f);
-
-			virtual void tick(double dt);
-
-			virtual bool collide(std::shared_ptr<DebugEntity>& e);
-
-		};
 	
 		// An entity representing the player
 		class Player : public Entity {
 		public:
-			std::string name;
 			Time::BinaryRepeatTimer fireCooldown;
 			double speed;
 			double bulletSpeed;
 			int bulletDmg;
 
-			Player(double x, double y, std::string name, std::shared_ptr<Time::Stopwatch> stopwatch);
+			Player(double x, double y, std::shared_ptr<Time::Stopwatch> stopwatch);
 
 			void shoot();
 
@@ -95,7 +87,7 @@ namespace SI
 
 		public:
 			Enemy(EntityType type, double x, double y, int health);
-
+			
 			void tick(double dt);
 
 			virtual void shoot() = 0;
@@ -103,6 +95,7 @@ namespace SI
 			virtual void destroyEvent() = 0;
 		};
 
+		// A small enemy
 		class SmallEnemy : public Enemy {
 		public:
 			SmallEnemy(double x, double y, int health = 1);
@@ -112,6 +105,7 @@ namespace SI
 			virtual void destroyEvent();
 		};
 
+		// A large enemy
 		class BigEnemy : public Enemy {
 		public:
 			BigEnemy(double x, double y, int health = 2);
@@ -138,7 +132,7 @@ namespace SI
 			double leftMostPoint();
 
 		public:
-			EnemyCluster();
+			EnemyCluster(std::shared_ptr<Time::Stopwatch> stopwatch);
 
 			void setSpeed(double speed, double speedInc);
 

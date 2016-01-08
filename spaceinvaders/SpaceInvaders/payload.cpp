@@ -11,32 +11,132 @@ namespace SI {
 		
 		// Payload
 
-		void Payload::addEvent(Event event) {
+			// Getters & Setters
+
+		std::string ModelObserver::getLevelName(){
+			return levelName;
+		}
+
+		void ModelObserver::updateLevelName(std::string levelName){
+			this->levelName = levelName;
+		}
+
+		unsigned int ModelObserver::getSecondsPassed() {
+			return secondsPassed;
+		}
+
+		void ModelObserver::updateSecondsPassed(unsigned int secondsPassed) {
+			this->secondsPassed = secondsPassed;
+		}
+
+		int ModelObserver::getLives() {
+			return lives;
+		}
+
+		void ModelObserver::updateLives(int lives) {
+			this->lives = lives;
+		}
+
+		ModelState ModelObserver::getState() {
+			return state;
+		}
+
+		void ModelObserver::updateState(ModelState state) {
+			this->state = state;
+		}
+
+		bool ModelObserver::isPlayerInvinc(){
+			return playerInvinc;
+		}
+
+		void ModelObserver::updatePlayerInvinc(bool playerInvinc) {
+			this->playerInvinc = playerInvinc;
+		}
+
+		bool ModelObserver::isPlayerDead(){
+			return playerDead;
+		}
+
+		void ModelObserver::updatePlayerDead(bool playerDead) {
+			this->playerDead = playerDead;
+		}
+
+		unsigned int ModelObserver::getEntityCount(){
+			return entityCount;
+		}
+
+		void ModelObserver::updateEntityCount(unsigned int entityCount) {
+			this->entityCount = entityCount;
+		}
+
+		std::vector<std::shared_ptr<EntityObserver>>& ModelObserver::getEntityObservers(){
+			return entityObservers;
+		}
+		
+			// Events & Entities
+
+		void ModelObserver::addEvent(Event event) {
 			events.push_back(event);
 		}
 
-		std::vector<Event> Payload::popEvents() {
+		std::vector<Event> ModelObserver::popEvents() {
 			std::vector<Event> out = events;
 			events.clear();
 			return out;
 		}
 
-		std::shared_ptr<PayloadEntity> Payload::addEntity() {
-			auto newEntity = std::make_shared<PayloadEntity>();
-			payloadEntities.push_back(newEntity);
+		std::shared_ptr<EntityObserver> ModelObserver::addEntity() {
+			auto newEntity = std::make_shared<EntityObserver>();
+			entityObservers.push_back(newEntity);
 			return newEntity;
 		}
 
-		void Payload::deleteEntity(std::shared_ptr<PayloadEntity> e) {
-			payloadEntities.erase(std::remove(payloadEntities.begin(), payloadEntities.end(), e), payloadEntities.end());
+		void ModelObserver::deleteEntity(std::shared_ptr<EntityObserver> e) {
+			entityObservers.erase(std::remove(entityObservers.begin(), entityObservers.end(), e), entityObservers.end());
 		}
 
-		Payload::Payload() :
+		void ModelObserver::clearEntities(){
+			entityObservers.clear();
+		}
+
+		ModelObserver::ModelObserver() :
 			secondsPassed(0), 
 			state(ModelState::running),
 			playerDead(false)
 		{}
 		
-		PayloadEntity::PayloadEntity() {}
+		// PayloadEntity
+
+		EntityObserver::EntityObserver() {}
+
+		EntityType EntityObserver::getType() {
+			return type;
+		}
+
+		void EntityObserver::setType(EntityType type){
+			this->type = type;
+		}
+
+		double EntityObserver::getXpos() {
+			return xpos;
+		}
+
+		void EntityObserver::setPos(double xpos, double ypos) {
+			this->xpos = xpos;
+			this->ypos = ypos;
+		}
+
+		double EntityObserver::getYpos() {
+			return ypos;
+		}
+
+		int EntityObserver::getHealth() {
+			return health;
+		}
+
+		void EntityObserver::setHealth(int health) {
+			this->health = health;
+		}
+
 	}
 }

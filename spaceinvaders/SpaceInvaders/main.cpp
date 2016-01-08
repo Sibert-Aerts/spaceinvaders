@@ -18,6 +18,7 @@ int main()
 		std::cout << "creating view..." << std::endl;
 		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(0.0f);
 
+		std::cout << "registering view..." << std::endl;
 		game.registerView(view);
 
 		std::cout << "running...!" << std::endl;
@@ -25,7 +26,7 @@ int main()
 		std::cout << "Done!" << std::endl;
 
 	} catch (std::exception& e) {
-		std::cout << "Exception encountered!" << std::endl;
+		std::cout << "\nException encountered!" << std::endl;
 		std::cout << e.what() << std::endl;
 		return 1;
 	}
