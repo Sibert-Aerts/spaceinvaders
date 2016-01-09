@@ -1,11 +1,9 @@
 #pragma once
 
 #include "StdAfx.h"
-	// Model stuff
 #include "level.h"
-#include "payload.h"
+#include "observer.h"
 #include "entity.h"
-	// Other
 #include "view.h"
 #include "controller.h"
 #include "time.h"
@@ -13,12 +11,12 @@
 
 namespace SI {
 
+	// Declare classes to resolve dependencies
 	namespace Vw {
 		class View;
 	}
 
 	namespace Md {
-
 		class Entity;
 		class Player;
 		class Enemy;
@@ -32,7 +30,7 @@ namespace SI {
 		class LevelParser;
 		class Level;
 		
-	// A model capable of simulating a game of Space Invaders
+		// A model which simulates a game of Space Invaders
 		class Model {
 
 		private:
@@ -71,10 +69,10 @@ namespace SI {
 			std::shared_ptr<Player> player;
 
 			// A timer that determines if the player is invincible
-			Time::WithinPeriodTimer playerInvincTimer;	// todo: shove this timer into the player?
+			Time::WithinPeriodTimer playerInvincTimer;
 
 			// A timer that determines if the player is dead
-			Time::WithinPeriodTimer playerDeadTimer;	// todo: shove this timer into the player?
+			Time::WithinPeriodTimer playerDeadTimer;
 
 				// State related:
 			// The current state of the player/model

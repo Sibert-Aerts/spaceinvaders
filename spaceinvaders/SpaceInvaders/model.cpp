@@ -15,9 +15,6 @@ namespace SI {
 			levelSwitchTimer(3.0, true),
 			currentLevel(0)
 		{
-			// Initialise the static Entity variable pointing to the model:
-			// Todo: make this less horrible in case of multiple Models running in tandem...?
-
 			levelParser = std::make_unique<LevelParser>();
 			enemyCluster = std::make_unique<EnemyCluster>(stopwatch);
 
@@ -72,7 +69,7 @@ namespace SI {
 
 		void Model::updateLevelName(){
 			for (auto& observer : observers)
-				observer->updateLevelName(levels[currentLevel]->name);
+				observer->updateLevelName(levels[currentLevel]->getName());
 		}
 
 		void Model::updateSecondsPassed(){
@@ -91,7 +88,7 @@ namespace SI {
 
 			clearEntities();
 			enemyCluster->clear();
-			enemyCluster->setSpeed(levels[currentLevel]->speed, levels[currentLevel]->speedInc);
+			enemyCluster->setSpeed(levels[currentLevel]->getSpeed(), levels[currentLevel]->getSpeedInc());
 
 			updateLevelName();
 			addEntity(player);
@@ -192,10 +189,10 @@ namespace SI {
 				case Ctrl::shoot:
 					if (state == ModelState::running && !playerDeadTimer())
 						player->shoot();
-					if (state == ModelState::paused && !levelSwitchTimer()) {
-						completeLevel();
-						std::cout << "SKIPPING LEVEL" << std::endl;
-					}
+					//if (state == ModelState::paused && !levelSwitchTimer()) {
+					//	completeLevel();
+					//	std::cout << "SKIPPING LEVEL" << std::endl;
+					//}
 					break;
 
 				case Ctrl::left:
@@ -285,10 +282,13 @@ namespace SI {
 					break;
 				case slowdown:
 					enemyCluster->freeze();
-					addEvent(Event(pickup, e->getX(), e->getY(), "STOP!"));
+					addEvent(Event(pickup, e->getX(), e->getY(), "FREEZE!"));
 					break;
 				}
 			}
+			// Destroy the powerup if it falls off the bottom of the screen
+			if (e->getY() > 720.0)
+				deleteEntity(e);
 		}
 
 		void Model::addEvent(Event& e){

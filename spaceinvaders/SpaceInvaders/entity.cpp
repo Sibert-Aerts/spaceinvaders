@@ -5,14 +5,6 @@
 namespace SI {
 	namespace Md {
 
-		// Helper functions:
-
-		// A function that calculates the resulting velocity of an object after collission
-		// Used for the debugEntities
-		double elasticCollission(double v1, double m1, double v2, double m2) {
-			return (v1*(m1 - m2) + 2 * m2*v2) / (m1 + m2);
-		}
-
 		// Entity
 		
 		Entity::Entity(EntityType type, double xpos, double ypos, float size, int health) :
@@ -25,20 +17,20 @@ namespace SI {
 
 		void Entity::registerObserver(std::shared_ptr<EntityObserver>& observer){
 			observers.push_back(observer);
-			observer->setType(type);
+			observer->updateType(type);
 			updatePosition();
 			updateHealth();
 		}
 
-		std::vector<std::shared_ptr<EntityObserver>>& Entity::getObservers(){
+		const std::vector<std::shared_ptr<EntityObserver>>& Entity::getObservers() const {
 			return observers;
 		}
 
-		double Entity::getX() {
+		double Entity::getX() const {
 			return xpos;
 		}
 
-		double Entity::getY() {
+		double Entity::getY() const {
 			return ypos;
 		}
 
@@ -50,11 +42,11 @@ namespace SI {
 			this->ypos = ypos;
 		}
 
-		float Entity::getSize() {
+		float Entity::getSize() const {
 			return size;
 		}
 
-		int Entity::getHealth() {
+		int Entity::getHealth() const {
 			return health;
 		}
 
@@ -66,17 +58,17 @@ namespace SI {
 			if (observers.empty())
 				throw(std::runtime_error("Entity does not have any associated observers!"));
 			for( auto& observer : observers)
-				observer->setPos(xpos, ypos);
+				observer->updatePosition(xpos, ypos);
 		}
 
 		void Entity::updateHealth(){
 			if (observers.empty())
 				throw(std::runtime_error("Entity does not have any associated observers!"));
 			for (auto& observer : observers)
-				observer->setHealth(health);
+				observer->updateHealth(health);
 		}
 
-		bool Entity::hit(std::shared_ptr<Entity> e) {
+		bool Entity::hit(const std::shared_ptr<Entity> e) const {
 			double D = sqrt(pow((xpos - e->xpos), 2) + pow((ypos - e->ypos), 2));
 			double d = D - (size + e->size);
 			if (d > 0)
@@ -84,7 +76,7 @@ namespace SI {
 			return true;
 		}
 
-		bool Entity::isDead(){
+		bool Entity::isDead() const {
 			return health <= 0;
 		}
 		
@@ -93,8 +85,7 @@ namespace SI {
 		Player::Player(double x, double y, std::shared_ptr<Time::Stopwatch> stopwatch) :
 			Entity( EntityType::player, x, y, 28.0f, 3),
 			fireCooldown(0.4, stopwatch),
-			speed(200), 
-			bulletSpeed(400.0), bulletDmg(1)
+			speed(200), bulletSpeed(400.0), bulletDmg(1)
 		{}
 		
 		void Player::speedUp(){
@@ -204,7 +195,7 @@ namespace SI {
 
 			int min = std::min(health, e->getHealth());
 			health -= min;
-			e->setHealth(e->getHealth() - 1);
+			e->setHealth(e->getHealth() - min);
 
 			updateHealth();
 			e->updateHealth();
@@ -327,6 +318,7 @@ namespace SI {
 			yDistance = -1.0;
 			enemies.clear();
 			initialCount = 0;
+			frozen.forceFalse();
 		}
 
 		unsigned int EnemyCluster::count(){

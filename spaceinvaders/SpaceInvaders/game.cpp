@@ -3,32 +3,30 @@
 
 namespace SI {
 	
-	// Variable determining the minimum amount between 2 ticks in the model
+	// Variable determining the minimum time between 2 ticks in the model
 	double modelUpdateInterval = 0.001f;
 
-	Game::Game() : 
-		stopwatch(Time::GlobalStopwatch::getInstance()),
-		model(modelUpdateInterval)
-	{
+	Game::Game() {
+		model = std::make_shared<Md::Model>(modelUpdateInterval);
 		controller = std::make_shared<Ctrl::Controller>(0.0f);
-		model.registerController(controller);
+		model->registerController(controller);
 	}
 
 	void Game::registerView( std::shared_ptr<Vw::View> view ){
-		model.registerView(view);
+		model->registerView(view);
 		views.push_back(view);
 	}
 
 	void Game::run() {
-		model.reset();
+		model->reset();
 		while (true) {
 			controller->update();
-			model.tick();
-			tickViews();
+			model->tick();
+			updateViews();
 		}
 	}
 
-	void Game::tickViews() {
+	void Game::updateViews() {
 		for (std::shared_ptr<Vw::View> view : views) {
 			view->update();
 		}

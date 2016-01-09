@@ -14,9 +14,11 @@ namespace SI {
 		public:
 			Counter(std::shared_ptr<Stopwatch> sw = GlobalStopwatch::getInstance());
 
+			// Reset the counter to zero
 			void reset();
 
-			double getSeconds();
+			// Get the number of seconds that have passed
+			double getSeconds() const;
 
 		};
 
@@ -29,7 +31,8 @@ namespace SI {
 		public:
 			PeriodCounter(double period, std::shared_ptr<Stopwatch> sw = GlobalStopwatch::getInstance());
 
-			unsigned int getCount();
+			// Get the number of complete periods that have passed
+			unsigned int getCount() const;
 
 		};
 

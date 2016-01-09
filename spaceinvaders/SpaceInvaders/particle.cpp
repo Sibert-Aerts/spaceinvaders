@@ -16,19 +16,19 @@ namespace SI {
 			return (aliveTimer() && size > 0);
 		}
 
-		double Particle::getX(){
+		double Particle::getX() const {
 			return x;
 		}
 
-		double Particle::getY(){
+		double Particle::getY() const {
 			return y;
 		}
 
-		double Particle::getSize(){
+		double Particle::getSize() const {
 			return size;
 		}
 
-		sf::Color Particle::getColor(){
+		sf::Color Particle::getColor() const {
 			return color;
 		}
 
@@ -46,7 +46,7 @@ namespace SI {
 			Particle(x, y, xvel, yvel, 10.0, 0.0, lifeTime, color), text(text)
 		{}
 
-		std::string TextParticle::getText(){
+		std::string TextParticle::getText() const {
 			return text;
 		}
 		

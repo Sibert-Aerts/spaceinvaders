@@ -176,7 +176,7 @@
     <ClInclude Include="counter.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="payload.h" />
+    <ClInclude Include="observer.h" />
     <ClInclude Include="tools.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="random.h" />
@@ -200,7 +200,7 @@
     </ClCompile>
     <ClCompile Include="model.cpp" />
     <ClCompile Include="particle.cpp" />
-    <ClCompile Include="payload.cpp" />
+    <ClCompile Include="observer.cpp" />
     <ClCompile Include="random.cpp" />
     <ClCompile Include="resources.cpp" />
     <ClCompile Include="stdafx.cpp">

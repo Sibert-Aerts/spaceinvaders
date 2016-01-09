@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "payload.h"
+#include "observer.h"
 
 namespace SI {
 	namespace Md {
@@ -29,7 +29,7 @@ namespace SI {
 
 			// Getters & Setters
 
-		std::string ModelObserver::getLevelName(){
+		std::string ModelObserver::getLevelName()const {
 			return levelName;
 		}
 
@@ -37,7 +37,7 @@ namespace SI {
 			this->levelName = levelName;
 		}
 
-		unsigned int ModelObserver::getSecondsPassed() {
+		unsigned int ModelObserver::getSecondsPassed() const {
 			return secondsPassed;
 		}
 
@@ -45,7 +45,7 @@ namespace SI {
 			this->secondsPassed = secondsPassed;
 		}
 
-		int ModelObserver::getLives() {
+		int ModelObserver::getLives() const {
 			return lives;
 		}
 
@@ -53,7 +53,7 @@ namespace SI {
 			this->lives = lives;
 		}
 
-		ModelState ModelObserver::getState() {
+		ModelState ModelObserver::getState() const {
 			return state;
 		}
 
@@ -61,7 +61,7 @@ namespace SI {
 			this->state = state;
 		}
 
-		bool ModelObserver::isPlayerInvinc(){
+		bool ModelObserver::isPlayerInvinc()const {
 			return playerInvinc;
 		}
 
@@ -69,7 +69,7 @@ namespace SI {
 			this->playerInvinc = playerInvinc;
 		}
 
-		bool ModelObserver::isPlayerDead(){
+		bool ModelObserver::isPlayerDead()const {
 			return playerDead;
 		}
 
@@ -85,7 +85,7 @@ namespace SI {
 			this->entityCount = entityCount;
 		}
 
-		std::vector<std::shared_ptr<EntityObserver>>& ModelObserver::getEntityObservers(){
+		const std::vector<std::shared_ptr<EntityObserver>>& ModelObserver::getEntityObservers() const{
 			return entityObservers;
 		}
 		
@@ -125,32 +125,32 @@ namespace SI {
 
 		EntityObserver::EntityObserver() {}
 
-		EntityType EntityObserver::getType() {
+		EntityType EntityObserver::getType() const {
 			return type;
 		}
 
-		void EntityObserver::setType(EntityType type){
+		void EntityObserver::updateType(EntityType type){
 			this->type = type;
 		}
 
-		double EntityObserver::getXpos() {
+		double EntityObserver::getXpos()const {
 			return xpos;
 		}
 
-		void EntityObserver::setPos(double xpos, double ypos) {
+		void EntityObserver::updatePosition(double xpos, double ypos) {
 			this->xpos = xpos;
 			this->ypos = ypos;
 		}
 
-		double EntityObserver::getYpos() {
+		double EntityObserver::getYpos() const {
 			return ypos;
 		}
 
-		int EntityObserver::getHealth() {
+		int EntityObserver::getHealth() const {
 			return health;
 		}
 
-		void EntityObserver::setHealth(int health) {
+		void EntityObserver::updateHealth(int health) {
 			this->health = health;
 		}
 

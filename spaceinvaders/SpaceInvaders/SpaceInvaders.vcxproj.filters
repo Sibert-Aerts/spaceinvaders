@@ -96,14 +96,14 @@
     <ClCompile Include="particle.cpp">
       <Filter>Source Files\Space Invaders\View</Filter>
     </ClCompile>
-    <ClCompile Include="payload.cpp">
-      <Filter>Source Files\Space Invaders\Model</Filter>
-    </ClCompile>
     <ClCompile Include="level.cpp">
       <Filter>Source Files\Space Invaders\Model</Filter>
     </ClCompile>
     <ClCompile Include="tools.cpp">
       <Filter>Source Files\Space Invaders</Filter>
+    </ClCompile>
+    <ClCompile Include="observer.cpp">
+      <Filter>Source Files\Space Invaders\Model</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,9 +143,6 @@
     <ClInclude Include="counter.h">
       <Filter>Header Files\Space Invaders\Time</Filter>
     </ClInclude>
-    <ClInclude Include="payload.h">
-      <Filter>Header Files\Space Invaders\Model</Filter>
-    </ClInclude>
     <ClInclude Include="resources.h">
       <Filter>Header Files\Space Invaders\View</Filter>
     </ClInclude>
@@ -153,6 +150,9 @@
       <Filter>Header Files\Space Invaders\View</Filter>
     </ClInclude>
     <ClInclude Include="level.h">
+      <Filter>Header Files\Space Invaders\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="observer.h">
       <Filter>Header Files\Space Invaders\Model</Filter>
     </ClInclude>
   </ItemGroup>

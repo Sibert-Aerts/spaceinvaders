@@ -8,34 +8,31 @@
 
 
 namespace SI {
-	
-	// A simple struct that holds game configuration data.
-	struct GameConfig {
-		int foo;
-		int bar;
-	};
 
-	// A class which manages a Model, Controllers and Views into
-	// a functioning program.
+	// A class which manages a Model, Controllers and Views into a working game
 	class Game {
 	private:
 			// Data members
-		Md::Model model;
+		// The model
+		std::shared_ptr<Md::Model> model;
+
+		// The views
 		std::vector<std::shared_ptr<Vw::View>> views;
+		
+		// The controller
 		std::shared_ptr<Ctrl::Controller> controller;
-
-		std::shared_ptr<Time::GlobalStopwatch> stopwatch;
-
-		unsigned int tickNum;
 
 	public:
 		Game();
 
+		// Register a view
 		void registerView( std::shared_ptr<Vw::View> view );
 
+		// Begin running the game, endlessly
 		void run();
 
-		void tickViews();
+		// Update all views
+		void updateViews();
 
 	};
 

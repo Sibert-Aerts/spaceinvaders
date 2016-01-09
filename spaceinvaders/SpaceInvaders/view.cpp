@@ -5,7 +5,8 @@ namespace SI
 {
 	namespace Vw {
 
-		bool drawDebugText = true;	// Draw framerate & entity count
+		// Debug: Whether or not the debug overlay should be drawn
+		bool drawDebugTextSetting = false;
 
 		// Constant variables
 
@@ -36,20 +37,20 @@ namespace SI
 
 			if (!frameTimer())
 				return;
-			double dt = stopwatch->tick();
-			// Fortunately this is the only class that ticks the global stopwatch (I think) else stuff would go wrong
 
+			double dt = stopwatch->tick();
+
+			// Check if the window is closed
 			checkWindowEvents();
 
-			drawEvents();
+			checkEvents();
 
 			tickParticles(dt);
 						
 		// ________DRAWING BEGINS HERE____________________________________
-			window->clear(sf::Color(15,15,15));
+			window->clear();
 			
 				// Game elements:
-
 			// Draw the background
 			window->draw(resources.getBackgroundSprite());
 			
@@ -83,15 +84,14 @@ namespace SI
 			drawParticles();
 
 				// HUD elements:
-
 			// Draw the lives
 			drawLives();
 
 			// Draw the timer
 			std::string timerText = "TIME: " + std::to_string(observer->getSecondsPassed());
-			drawShadedText(timerText, 20, green3, sf::Vector2f(680, 20), 2, green1);
+			drawShadedText(timerText, 20, green3, sf::Vector2f(660, 20), 2, green1);
 
-			// if game over, fade the screen and draw "GAME OVER"
+			// Draw an overlay if the game isn't running
 			switch (observer->getState()) {
 			case Md::ModelState::running:
 				break;
@@ -114,23 +114,8 @@ namespace SI
 			}
 
 			// DEBUG TEXT:
-			if (drawDebugText) {
-				// Draw the framerate
-				double avg = avgFps(1 / dt);
-				std::string text = "FPS: " + std::to_string(avg);
-				drawShadedText(text, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4), 2);
-
-				// Draw the entity count
-				text = "Entities: " + std::to_string(observer->getEntityCount());
-				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 16), 2);
-
-				// Draw the entity count
-				text = "Entity Observers: " + std::to_string(observer->getEntityObservers().size());
-				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 28), 2);
-
-				// Draw the particle count
-				text = "Particles: " + std::to_string(particles.size());
-				drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 40), 2);
+			if (drawDebugTextSetting) {
+				drawDebugText(dt);
 			}
 
 			window->display();
@@ -146,56 +131,56 @@ namespace SI
 			}
 		}
 
-		void View::drawEvents(){
+		void View::checkEvents(){
 			std::vector<Md::Event> events = observer->popEvents();
 			for (auto e : events) {
 				switch (e.getType()) {
 				case Md::EventType::friendlyShotFired:
-					resources.playerFireSound.play();
+					resources.playPlayerFireSound();
 					break;
 				case Md::EventType::enemyShotFired:
-					resources.enemyFireSound.play();
+					resources.playEnemyFireSound();
 					break;
 				case Md::EventType::bulletHit:
 					makeParticleExplosion(e.getX(), e.getY(), 400, 4, 10, -30, green2, std::_Pi / 4);
 					break;
 				case Md::EventType::friendlyHit:
-					resources.playerHitSound.play();
+					resources.playPlayerHitSound();
 					makeParticleExplosion(e.getX(), e.getY(), 400, 16, 20, -40);
 					break;
 				case Md::EventType::enemyHit:
-					resources.enemyHitSound.play();
+					resources.playEnemyHitSound();
 					break;
 				case Md::EventType::smallEnemyDestroyed:
-					resources.enemyDestroyedSound.play();
+					resources.playEnemyDestroyedSound();
 					makeParticleExplosion(e.getX(), e.getY(), 150, 16, 10, -5, green1);
 					makeParticleExplosion(e.getX(), e.getY(), 100, 8, 15, -10, green2);
 					break;
 				case Md::EventType::bigEnemyDestroyed:
-					resources.enemyDestroyedSound.play();
+					resources.playEnemyDestroyedSound();
 					makeRandomParticleExplosion(e.getX(), e.getY(), 75, 50, 16, 20, 5, -15, green0, 3.0, 0.0);
 					makeRandomParticleExplosion(e.getX(), e.getY(), 250, 100, 8, 3, 0, 0, green3, 1.0, 0.3);
 					makeParticleExplosion(e.getX(), e.getY(), 150, 16, 12, -5, green1, 0.0, 1.2);
 					makeParticleExplosion(e.getX(), e.getY(), 75, 8, 25, -20, green2, 0.0, 1.5);
 					break;
 				case Md::EventType::barrierHit:
-					resources.barrierHitSound.play();
+					resources.playBarrierHitSound();
 					break;
 				case Md::EventType::barrierDestroyed:
-					resources.barrierDestroySound.play();
+					resources.playBarrierDestroySound();
 					makeParticleExplosion(e.getX(), e.getY(), 150, 8, 15, -6, green1, std::_Pi / 8);
 					makeParticleExplosion(e.getX(), e.getY(), 100, 8, 20, -10, green0);
 					break;
 				case Md::EventType::pickup:
 					makeParticleExplosion(e.getX(), e.getY(), 600, 4, 10, -30, green3);
 					makeTextParticle(e.getText(), e.getX(), e.getY());
-					resources.pickupSound.play();
+					resources.playPickupSound();
 					break;
 				case Md::EventType::paused:
-					resources.pauseSound.play();
+					resources.playPauseSound();
 					break;
 				case Md::EventType::unPaused:
-					resources.pauseSound.play();
+					resources.playPauseSound();
 					break;
 				case Md::EventType::gameOver:
 					// Play a gameOver song here or something...?
@@ -359,6 +344,25 @@ namespace SI
 			shape.setFillColor(color);
 			shape.setPosition(sf::Vector2f((float)x , (float)y));
 			window->draw(shape);
+		}
+
+		void View::drawDebugText(double dt){
+			// Draw the framerate
+			double avg = avgFps(1 / dt);
+			std::string text = "FPS: " + std::to_string(avg);
+			drawShadedText(text, 12, ((avg < 30) ? sf::Color::Red : ((avg < 60) ? sf::Color::Yellow : sf::Color::Green)), sf::Vector2f(4, 4), 2);
+
+			// Draw the entity count
+			text = "Entities: " + std::to_string(observer->getEntityCount());
+			drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 16), 2);
+
+			// Draw the entity count
+			text = "Entity Observers: " + std::to_string(observer->getEntityObservers().size());
+			drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 28), 2);
+
+			// Draw the particle count
+			text = "Particles: " + std::to_string(particles.size());
+			drawShadedText(text, 12, sf::Color::Yellow, sf::Vector2f(4, 40), 2);
 		}
 		
 	}

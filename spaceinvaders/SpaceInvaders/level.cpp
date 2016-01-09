@@ -9,7 +9,7 @@ namespace SI {
 		LevelEntity::LevelEntity(EntityType type, unsigned int x, unsigned int y, unsigned int health) :
 			type(type), x(x), y(y), health(health) {}
 
-		std::shared_ptr<Entity> LevelEntity::makeEntity(){
+		std::shared_ptr<Entity> LevelEntity::makeEntity() const {
 			switch (type) {
 			case smallEnemy:
 				return std::make_shared<SmallEnemy>(x * 40 + 40, y * 40 + 20, health);
@@ -27,11 +27,19 @@ namespace SI {
 
 	// Level
 		
-		void Level::parseEntity(const char * text, unsigned int x, unsigned int y) {
-			return;
+		Level::Level() {}
+
+		double Level::getSpeed() const{
+			return speed;
 		}
 
-		Level::Level() {}
+		double Level::getSpeedInc() const{
+			return speedInc;
+		}
+
+		std::string Level::getName() const{
+			return name;
+		}
 
 		void Level::parseLevel(std::ifstream& file) {
 

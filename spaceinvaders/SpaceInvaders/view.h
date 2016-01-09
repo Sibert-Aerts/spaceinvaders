@@ -19,7 +19,7 @@ namespace SI
 		struct Resources;
 
 		// CONSTANTS:
-			// Colours: The 4 colours of our palette
+			// Colors: The 4 colors of the game palette
 		extern const sf::Color green0;
 		extern const sf::Color green1;
 		extern const sf::Color green2;
@@ -70,7 +70,7 @@ namespace SI
 			void checkWindowEvents();
 
 			// Perform actions based off the events stored in the observer
-			void drawEvents();
+			void checkEvents();
 
 			// Create a circular set of particles to simulate an explosion
 			void makeParticleExplosion(double x, double y, double speed, unsigned int count, double size, double sized, sf::Color color = green3, double angle = 0.0, double time = 1.0);
@@ -88,6 +88,7 @@ namespace SI
 			void drawParticles();
 			
 				// Hud:
+			// Draw the number of lives on screen as a series of sprites
 			void drawLives();
 
 				// Entities:
@@ -108,6 +109,10 @@ namespace SI
 			
 				// Shapes:
 			void drawRectangle(float width, float height, sf::Color color, double x, double y);
+
+				// Debug:
+			// Draw the framerate, entity count, observer entity count and particle count
+			void drawDebugText(double dt);
 		};
 
 	}

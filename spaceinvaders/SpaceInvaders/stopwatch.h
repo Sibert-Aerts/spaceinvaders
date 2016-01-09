@@ -13,10 +13,9 @@ namespace SI
 		// Returns the # of seconds from a std::chrono::nanoseconds
 		double nanoToSeconds(std::chrono::nanoseconds nano);
 		
-
 	// Classes
 
-		// An abstract class that allows entities to keep track of time passed between ticks,
+		// An abstract class that allows entities to keep track of time passed between ticks
 		// and the current time, according to the stopwatch's rules
 		class Stopwatch {
 		protected:
@@ -26,7 +25,7 @@ namespace SI
 		public:
 			Stopwatch();
 			virtual double tick() = 0;
-			virtual TimePoint now() = 0;
+			virtual TimePoint now() const = 0;
 
 		};
 
@@ -45,8 +44,11 @@ namespace SI
 		public:
 			static std::shared_ptr<GlobalStopwatch> getInstance();
 
+			// Get the amount of time since last tick() call
 			double tick();
-			TimePoint now();
+
+			// Get the current time point in real time
+			TimePoint now() const;
 		};
 
 
@@ -55,19 +57,32 @@ namespace SI
 		class SimStopwatch : public Stopwatch {
 		private:
 			std::shared_ptr<GlobalStopwatch> globalStopwatch;
-			TimePoint lastTick;
 
+			// Whether the stopwatch is paused or not
 			bool paused;
+
+			// The moment the stopwatch was paused
 			TimePoint pauseTime;
+
+			// The amount of time the stopwatch has been paused
 			std::chrono::nanoseconds pauseAdjust;
 
 		public:
 			SimStopwatch();
 
+			// Get the amount of time since last tick() call, adjusted by the model's pausedness
 			double tick();
-			TimePoint now();
-			bool isPaused();
+
+			// Get the current time point, adjusted by the model's pausedness
+			TimePoint now() const;
+
+			// Get whether or not the stopwatch is paused
+			bool isPaused() const;
+
+			// Pause the stopwatch
 			void pause();
+
+			// Unpause the stopwatch
 			void unPause();
 
 		};

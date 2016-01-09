@@ -31,7 +31,7 @@ namespace SI
 			return stopwatch;
 		}
 
-		TimePoint GlobalStopwatch::now() {
+		TimePoint GlobalStopwatch::now() const {
 			return std::chrono::high_resolution_clock::now();
 		}
 
@@ -51,7 +51,7 @@ namespace SI
 
 		SimStopwatch::SimStopwatch() : globalStopwatch(GlobalStopwatch::getInstance()), paused(false), pauseAdjust(0) {}
 
-		TimePoint SimStopwatch::now() {
+		TimePoint SimStopwatch::now() const {
 			if (paused)
 				return (pauseTime - pauseAdjust);
 			return (globalStopwatch->now() - pauseAdjust);
@@ -73,7 +73,7 @@ namespace SI
 			return out;			
 		}
 
-		bool SimStopwatch::isPaused() {
+		bool SimStopwatch::isPaused() const {
 			return paused;
 		}
 

@@ -3,6 +3,34 @@
 
 namespace SI {
 	namespace Vw {
+		void Resources::playPlayerFireSound(){
+			playerFireSound.play();
+		}
+		void Resources::playEnemyFireSound() {
+			enemyFireSound.play();
+		}
+		void Resources::playPauseSound() {
+			pauseSound.play();
+		}
+		void Resources::playPlayerHitSound() {
+			playerHitSound.play();
+		}
+		void Resources::playEnemyHitSound() {
+			enemyHitSound.play();
+		}
+		void Resources::playEnemyDestroyedSound() {
+			enemyDestroyedSound.play();
+		}
+		void Resources::playBarrierHitSound() {
+			barrierHitSound.play();
+		}
+		void Resources::playBarrierDestroySound() {
+			barrierDestroySound.play();
+		}
+		void Resources::playPickupSound() {
+			pickupSound.play();
+		}
+
 		Resources::Resources(std::shared_ptr<Time::Stopwatch> stopwatch) :
 			smallEnemyAnimationTimer(0.5, stopwatch),
 			bigEnemyAnimationTimer(0.2, stopwatch),
@@ -113,7 +141,6 @@ namespace SI {
 			switch (health) {
 			case 0:
 				throw(std::runtime_error("Attempted to draw a dead barrier."));
-				// Todo: turn that into a bad_draw_error or something
 			case 1:
 				return barrierSprite4;
 			case 2:
@@ -130,7 +157,6 @@ namespace SI {
 			switch (health) {
 			case 0:
 				throw(std::runtime_error("Attempted to draw a dead enemy bullet."));
-				// Todo: turn that into a bad_draw_error or something
 			case 1:
 				return enemyBulletSprite1;
 			default:	// 2 or more
@@ -143,7 +169,6 @@ namespace SI {
 			switch (health) {
 			case 0:
 				throw(std::runtime_error("Attempted to draw a dead player bullet."));
-				// Todo: turn that into a bad_draw_error or something
 			case 1:
 				return playerBulletSprite1;
 			case 2:

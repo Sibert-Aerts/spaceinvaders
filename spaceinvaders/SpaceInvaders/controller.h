@@ -22,10 +22,11 @@ namespace SI {
 		public:
 			Controller(double period = 0);
 
+			// Check which keys are pressed
 			void update();
 
 			// Returns the registered input as a vector of Input
-			// Guaranteed constant return value between update calls
+			// Will return the exact same vector until update() is called again
 			std::vector<Input> getInput();
 
 		};

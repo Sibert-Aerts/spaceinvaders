@@ -14,7 +14,7 @@ namespace SI {
 			start = stopwatch->now();
 		}
 
-		double Counter::getSeconds() {
+		double Counter::getSeconds() const {
 			return nanoToSeconds(stopwatch->now() - start);
 		}
 
@@ -24,7 +24,7 @@ namespace SI {
 			counter(sw), period(period)
 		{}
 
-		unsigned int PeriodCounter::getCount() {
+		unsigned int PeriodCounter::getCount() const {
 			return (unsigned int)(counter.getSeconds() / period);
 		}
 
