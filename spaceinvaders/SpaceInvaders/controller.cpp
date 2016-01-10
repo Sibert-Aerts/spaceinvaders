@@ -27,7 +27,7 @@ namespace SI {
 			if (isPressed(sf::Keyboard::Right) || isPressed(sf::Keyboard::D)) {
 				recordedInput[right] = true;
 			}
-			if (isPressed(sf::Keyboard::Space) || isPressed(sf::Keyboard::Z) || isPressed(sf::Keyboard::W)) {
+			if (isPressed(sf::Keyboard::Space) || isPressed(sf::Keyboard::Z) || isPressed(sf::Keyboard::Up) || isPressed(sf::Keyboard::W)) {
 				recordedInput[shoot] = true;
 			}
 			if (isPressed(sf::Keyboard::Escape)) {

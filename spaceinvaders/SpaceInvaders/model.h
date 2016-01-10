@@ -119,6 +119,9 @@ namespace SI {
 			// Complete the current level and move on to the next, or win the game
 			void completeLevel();
 
+			// Set the game in the victory state
+			void victory();
+
 			// Advance the simulation by a single step
 			// But only if it has been long enough since the last tick
 			void tick();
@@ -136,7 +139,7 @@ namespace SI {
 			void tickPowerup(double dt, std::shared_ptr<Powerup> e);
 
 			// Register a new entity to the simulation
-			void addEvent(Event& e);
+			void addEvent(const Event& e);
 
 			// Register a new entity to the simulation
 			void addEntity(std::shared_ptr<Entity> entity);

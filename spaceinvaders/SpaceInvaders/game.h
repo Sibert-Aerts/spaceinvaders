@@ -14,7 +14,7 @@ namespace SI {
 	private:
 			// Data members
 		// The model
-		std::shared_ptr<Md::Model> model;
+		std::unique_ptr<Md::Model> model;
 
 		// The views
 		std::vector<std::shared_ptr<Vw::View>> views;

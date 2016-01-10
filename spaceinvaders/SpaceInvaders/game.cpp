@@ -4,11 +4,11 @@
 namespace SI {
 	
 	// Variable determining the minimum time between 2 ticks in the model
-	double modelUpdateInterval = 0.001f;
+	double modelUpdateInterval = 1.0/120.0;
 
 	Game::Game() {
-		model = std::make_shared<Md::Model>(modelUpdateInterval);
-		controller = std::make_shared<Ctrl::Controller>(0.0f);
+		model = std::unique_ptr<Md::Model>(new Md::Model(modelUpdateInterval));
+		controller = std::make_shared<Ctrl::Controller>(0.0);
 		model->registerController(controller);
 	}
 

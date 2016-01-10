@@ -1,7 +1,7 @@
 // SpaceInvaders.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "game.h"
 
 using namespace SI;
@@ -16,7 +16,7 @@ int main()
 		Game game;
 
 		std::cout << "creating view..." << std::endl;
-		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(0.0f);
+		std::shared_ptr<Vw::View> view = std::make_shared<Vw::View>(1.0/60.0);
 
 		std::cout << "registering view..." << std::endl;
 		game.registerView(view);

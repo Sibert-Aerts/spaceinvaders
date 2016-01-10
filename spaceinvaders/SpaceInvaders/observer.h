@@ -8,7 +8,7 @@ namespace SI {
 
 		// An enum representing the states the model can be in
 		enum class ModelState {
-			running, paused, gameOver, levelSwitch
+			running, paused, gameOver, levelSwitch, victory
 		};
 
 		// An enum representing a type of event

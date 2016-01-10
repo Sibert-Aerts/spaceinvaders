@@ -70,7 +70,7 @@ namespace SI {
 						levelEntities.push_back(LevelEntity(barrier, x, y, line[x] - '0'));
 					}
 					else {											// Parse an exception
-						throw(bad_parse_exception("Unrecognised character \"" + line[x] + std::string("\".")));
+						throw(bad_parse_exception("Unrecognised character at position "  + std::to_string(x) + " " + std::to_string(y)));
 					}
 				}
 			}
@@ -126,7 +126,7 @@ namespace SI {
 
 		std::vector<std::shared_ptr<Level>> LevelParser::parseLevels(){
 			
-			std::string prefix = "Assets\\levels\\level";
+			std::string prefix = "Assets/levels/level";
 			std::string suffix = ".txt";
 
 			std::vector<std::shared_ptr<Level>> out;
@@ -141,7 +141,7 @@ namespace SI {
 				}
 				
 				try {
-					auto& level = std::make_shared<Level>();
+					const auto& level = std::make_shared<Level>();
 					level->parseLevel(file);
 					out.push_back(level);
 				}
@@ -155,7 +155,7 @@ namespace SI {
 			return out;
 		}
 
-		bad_parse_exception::bad_parse_exception(const char * message) : std::exception(message) {}
-		bad_parse_exception::bad_parse_exception(std::string message) : std::exception(message.c_str()) {}
+		bad_parse_exception::bad_parse_exception(const char * message) : std::runtime_error(message) {}
+		bad_parse_exception::bad_parse_exception(std::string message) : std::runtime_error(message.c_str()) {}
 	}
 }

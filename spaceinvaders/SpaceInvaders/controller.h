@@ -1,6 +1,6 @@
 #pragma once
 #include "StdAfx.h"
-#include "Time.h"
+#include "time.h"
 
 #define isPressed(key) sf::Keyboard::isKeyPressed(key)
 

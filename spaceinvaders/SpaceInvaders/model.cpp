@@ -15,8 +15,8 @@ namespace SI {
 			levelSwitchTimer(3.0, true),
 			currentLevel(0)
 		{
-			levelParser = std::make_unique<LevelParser>();
-			enemyCluster = std::make_unique<EnemyCluster>(stopwatch);
+			levelParser = std::unique_ptr<LevelParser>(new LevelParser);
+			enemyCluster = std::unique_ptr<EnemyCluster>(new EnemyCluster(stopwatch));
 
 			levels = levelParser->parseLevels();
 		}
@@ -103,7 +103,7 @@ namespace SI {
 
 		void Model::completeLevel(){
 			if (currentLevel == levels.size() - 1) {
-				gameOver();
+				victory();
 				return;
 			}
 			currentLevel++;
@@ -111,6 +111,11 @@ namespace SI {
 			stopwatch->pause();
 			levelSwitchTimer.reset();
 			loadLevel();
+		}
+		
+		void Model::victory(){
+			updateState(ModelState::victory);
+			stopwatch->pause();		
 		}
 
 		void Model::tick() {
@@ -146,13 +151,13 @@ namespace SI {
 			std::vector<std::shared_ptr<Powerup>> powerups;
 			
 			for (auto& entity : entities) {
-				if (auto& e = std::dynamic_pointer_cast<Bullet>(entity))
+				if (const auto& e = std::dynamic_pointer_cast<Bullet>(entity))
 					bullets.push_back(e);
-				if (auto& e = std::dynamic_pointer_cast<Enemy>(entity))
+				if (const auto& e = std::dynamic_pointer_cast<Enemy>(entity))
 					enemies.push_back(e);
-				if (auto& e = std::dynamic_pointer_cast<Barrier>(entity))
+				if (const auto& e = std::dynamic_pointer_cast<Barrier>(entity))
 					barriers.push_back(e);
-				if (auto& e = std::dynamic_pointer_cast<Powerup>(entity))
+				if (const auto& e = std::dynamic_pointer_cast<Powerup>(entity))
 					powerups.push_back(e);
 			}
 			
@@ -189,10 +194,6 @@ namespace SI {
 				case Ctrl::shoot:
 					if (state == ModelState::running && !playerDeadTimer())
 						player->shoot();
-					//if (state == ModelState::paused && !levelSwitchTimer()) {
-					//	completeLevel();
-					//	std::cout << "SKIPPING LEVEL" << std::endl;
-					//}
 					break;
 
 				case Ctrl::left:
@@ -218,6 +219,12 @@ namespace SI {
 						}
 					} else if (state == ModelState::gameOver) {			// If game over, escape retries the level
 						retryLevel();
+					} else if (state == ModelState::victory) {
+						// After completing the last level: Press Escape to restart the first level
+						levelSwitchTimer.reset();
+						updateState(ModelState::levelSwitch);
+						currentLevel = 0;
+						loadLevel();
 					}
 					break;
 				}
@@ -230,12 +237,12 @@ namespace SI {
 				if (e->hit(barrier))
 					e->hurt(barrier);
 
-			if (auto p = std::dynamic_pointer_cast<PlayerBullet>(e)) {
+			if (const auto& p = std::dynamic_pointer_cast<PlayerBullet>(e)) {
 				for (auto& enemy : enemies)
 					if (p->hit(enemy))
 						p->hurt(enemy);
 				
-			} else if (auto p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
+			} else if (const auto& p = std::dynamic_pointer_cast<EnemyBullet>(e)) {
 				if (p->hit(player) && !playerDeadTimer()) {
 					addEvent(Event(bulletHit, e->getX(), e->getY()));
 					deleteEntity(e);
@@ -291,7 +298,7 @@ namespace SI {
 				deleteEntity(e);
 		}
 
-		void Model::addEvent(Event& e){
+		void Model::addEvent(const Event& e){
 			for(auto& observer : observers)
 				observer->addEvent(e);
 		}
@@ -300,7 +307,7 @@ namespace SI {
 
 			entity->registerModel(this);
 			entities.push_back(entity);
-			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
+			if (const auto& e = std::dynamic_pointer_cast<Enemy>(entity))
 				enemyCluster->addEnemy(e);
 
 			for (auto& observer : observers) {
@@ -313,7 +320,7 @@ namespace SI {
 		void Model::deleteEntity(std::shared_ptr<Entity> entity){
 
 			entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
-			if (auto &e = std::dynamic_pointer_cast<Enemy>(entity))
+			if (const auto& e = std::dynamic_pointer_cast<Enemy>(entity))
 				enemyCluster->deleteEnemy(e);
 
 			for (unsigned int i = 0; i < observers.size(); ++i) {

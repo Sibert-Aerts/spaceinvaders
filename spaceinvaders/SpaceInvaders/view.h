@@ -24,6 +24,9 @@ namespace SI
 		extern const sf::Color green1;
 		extern const sf::Color green2;
 		extern const sf::Color green3;
+		
+			// pi
+		extern const double pi;
 
 		class View {
 		private:
@@ -52,8 +55,8 @@ namespace SI
 			std::vector<std::shared_ptr<Particle>> particles;
 
 			// Debug:
-			// A simple class that keeps track of the average framerate out of every 120 samples
-			AverageAccumulator<double, 120> avgFps;
+			// A simple object that keeps track of the average framerate out of every 120 samples
+			AverageAccumulator<double, 30> avgFps;
 
 
 		public:

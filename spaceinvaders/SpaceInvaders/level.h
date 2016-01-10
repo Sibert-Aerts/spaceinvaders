@@ -9,7 +9,7 @@ namespace SI {
 		class Entity;
 
 		// An exception thrown when the read input does not follow the input format
-		class bad_parse_exception : public std::exception {
+		class bad_parse_exception : public std::runtime_error {
 		public:
 			bad_parse_exception(const char* message);
 			bad_parse_exception(std::string message);

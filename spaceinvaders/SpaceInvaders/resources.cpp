@@ -37,24 +37,24 @@ namespace SI {
 			powerupAnimationTimer(0.05, stopwatch)
 		{
 			// Load font
-			if (!font8BitOperator.loadFromFile("Assets\\8bitOperatorPlus-Bold.ttf"))
-				throw(std::runtime_error("Failed to load font file: Assets\\8bitOperatorPlus-Bold.ttf"));
+			if (!font8BitOperator.loadFromFile("Assets/8bitOperatorPlus-Bold.ttf"))
+				throw(std::runtime_error("Failed to load font file: Assets/8bitOperatorPlus-Bold.ttf"));
 
 			// Load background
-			if (!backgroundTexture.loadFromFile("Assets\\sprites\\bg.png"))
-				throw(std::runtime_error("Failed to load texture: Assets\\sprites\\bg.png"));
+			if (!backgroundTexture.loadFromFile("Assets/sprites/bg.png"))
+				throw(std::runtime_error("Failed to load texture: Assets/sprites/bg.png"));
 			backgroundSprite.setTexture(backgroundTexture);
 			backgroundSprite.setScale(sf::Vector2f(5.0f, 5.0f));
 
 			// Load pause overlay
-			if (!pauseOverlayTexture.loadFromFile("Assets\\sprites\\pauseOverlay.png"))
-				throw(std::runtime_error("Failed to load texture: Assets\\sprites\\pauseOverlay.png"));
+			if (!pauseOverlayTexture.loadFromFile("Assets/sprites/pauseOverlay.png"))
+				throw(std::runtime_error("Failed to load texture: Assets/sprites/pauseOverlay.png"));
 			pauseOverlaySprite.setTexture(pauseOverlayTexture);
 			pauseOverlaySprite.setScale(sf::Vector2f(5.0f, 5.0f));
 
 			// Load sprites
-			if (!spriteSheetTexture.loadFromFile("Assets\\sprites\\sprites.png"))
-				throw(std::runtime_error("Failed to load texture: Assets\\sprites\\sprites.png"));
+			if (!spriteSheetTexture.loadFromFile("Assets/sprites/sprites.png"))
+				throw(std::runtime_error("Failed to load texture: Assets/sprites/sprites.png"));
 
 			loadSprite(spriteSheetTexture, playerSprite,		0, 0, 2, 1);
 			loadSprite(spriteSheetTexture, playerBulletSprite1, 2, 0, 1, 1);
@@ -82,14 +82,14 @@ namespace SI {
 			loadSprite(spriteSheetTexture, bigEnemySprite4,		6, 4, 2, 2);
 			
 			// Load sounds
-			loadSound(playerFireSoundBuffer, playerFireSound, "Assets\\sounds\\playerShoot.wav");
-			loadSound(playerHitSoundBuffer,  playerHitSound, "Assets\\sounds\\playerHit.wav");
-			loadSound(enemyFireSoundBuffer, enemyFireSound, "Assets\\sounds\\enemyShoot.wav");
-			loadSound(enemyHitSoundBuffer, enemyDestroyedSound, "Assets\\sounds\\enemyDestroyed.wav");
-			loadSound(barrierHitSoundBuffer, barrierHitSound, "Assets\\sounds\\barrierHit.wav");
-			loadSound(barrierDestroySoundBuffer, barrierDestroySound, "Assets\\sounds\\barrierDestroyed.wav");
-			loadSound(pauseSoundBuffer, pauseSound, "Assets\\sounds\\pause.wav");
-			loadSound(pickupSoundBuffer, pickupSound, "Assets\\sounds\\powerup.wav");
+			loadSound(playerFireSoundBuffer, playerFireSound, "Assets/sounds/playerShoot.wav");
+			loadSound(playerHitSoundBuffer,  playerHitSound, "Assets/sounds/playerHit.wav");
+			loadSound(enemyFireSoundBuffer, enemyFireSound, "Assets/sounds/enemyShoot.wav");
+			loadSound(enemyHitSoundBuffer, enemyDestroyedSound, "Assets/sounds/enemyDestroyed.wav");
+			loadSound(barrierHitSoundBuffer, barrierHitSound, "Assets/sounds/barrierHit.wav");
+			loadSound(barrierDestroySoundBuffer, barrierDestroySound, "Assets/sounds/barrierDestroyed.wav");
+			loadSound(pauseSoundBuffer, pauseSound, "Assets/sounds/pause.wav");
+			loadSound(pickupSoundBuffer, pickupSound, "Assets/sounds/powerup.wav");
 
 			enemyHitSound = barrierDestroySound;
 			enemyHitSound.setPitch(2.0f);

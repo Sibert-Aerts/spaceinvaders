@@ -1,7 +1,7 @@
 #pragma once
 
 #include "StdAfx.h"
-#include "Time.h"
+#include "time.h"
 #include "observer.h"
 #include "random.h"
 #include "model.h"

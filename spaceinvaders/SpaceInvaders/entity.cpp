@@ -366,7 +366,7 @@ namespace SI {
 		{}
 
 		PowerupType Powerup::getPowerupType(){
-			auto& rng = RNG::RNG::getInstance();
+			const auto& rng = RNG::RNG::getInstance();
 			if (rng->chanceOutOf(1, 5))	
 				return slowdown;
 			if (rng->chanceOutOf(1, 4))	

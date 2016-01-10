@@ -15,6 +15,8 @@ namespace SI
 		const sf::Color green2(139, 172, 15);
 		const sf::Color green3(169, 202, 30);
 		
+		const double pi(3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844);
+		
 	// View
 
 		View::View(double tickPeriod) :
@@ -111,6 +113,11 @@ namespace SI
 				drawCenteredShadedText("LEVEL COMPLETE", 80, 300, green2, green1, 5);
 				drawCenteredText("Next level: " + observer->getLevelName(), 30, 360, green1);
 				break;
+			case Md::ModelState::victory:
+				window->draw(resources.getPauseOverlaySprite());
+				drawCenteredShadedText("GAME COMPLETE", 80, 300, green2, green1, 5);
+				drawCenteredText("Press escape to restart", 30, 360, green1);
+				break;
 			}
 
 			// DEBUG TEXT:
@@ -142,7 +149,7 @@ namespace SI
 					resources.playEnemyFireSound();
 					break;
 				case Md::EventType::bulletHit:
-					makeParticleExplosion(e.getX(), e.getY(), 400, 4, 10, -30, green2, std::_Pi / 4);
+					makeParticleExplosion(e.getX(), e.getY(), 400, 4, 10, -30, green2, pi / 4);
 					break;
 				case Md::EventType::friendlyHit:
 					resources.playPlayerHitSound();
@@ -168,7 +175,7 @@ namespace SI
 					break;
 				case Md::EventType::barrierDestroyed:
 					resources.playBarrierDestroySound();
-					makeParticleExplosion(e.getX(), e.getY(), 150, 8, 15, -6, green1, std::_Pi / 8);
+					makeParticleExplosion(e.getX(), e.getY(), 150, 8, 15, -6, green1, pi / 8);
 					makeParticleExplosion(e.getX(), e.getY(), 100, 8, 20, -10, green0);
 					break;
 				case Md::EventType::pickup:
@@ -191,13 +198,13 @@ namespace SI
 
 		void View::makeParticleExplosion(double x, double y, double speed, unsigned int count, double size, double sized, sf::Color color, double angle, double time) {
 			for (unsigned int i = 0; i < count; ++i)
-				particles.push_back(std::make_shared<Particle>(x, y, speed*std::sin(std::_Pi*2*i/count + angle), speed * std::cos(std::_Pi * 2 * i / count + angle), size, sized, time, color));
+				particles.push_back(std::make_shared<Particle>(x, y, speed*std::sin(pi*2*i/count + angle), speed * std::cos(pi * 2 * i / count + angle), size, sized, time, color));
 		}
 
 		void View::makeRandomParticleExplosion(double x, double y, double speed, double speedVar, unsigned int count, double size, double sizeVar, double sized, sf::Color color, double time, double timeVar){
 			for (unsigned int i = 0; i < count; ++i) {
 				double rSpeed = rng->realFromRange(speed-speedVar, speed+speedVar);
-				double angle = rng->realFromRange(0.0, (double)std::_Pi * 2);
+				double angle = rng->realFromRange(0.0, (double)pi * 2);
 				double rSize = rng->realFromRange(size - sizeVar, size + sizeVar);
 				double rTime = rng->realFromRange(time - timeVar, time + timeVar);
 				particles.push_back(std::make_shared<Particle>(x, y, rSpeed*std::sin(angle), rSpeed * std::cos(angle), rSize, sized, rTime, color));
@@ -226,7 +233,7 @@ namespace SI
 
 		void View::drawParticles() {
 			for (auto& p : particles) {
-				if (auto& e = std::dynamic_pointer_cast<TextParticle>(p)) {
+				if (const auto& e = std::dynamic_pointer_cast<TextParticle>(p)) {
 					drawShadedText(e->getText(), 40, e->getColor(), sf::Vector2f((float)e->getX(), (float)e->getY()), 5);
 				}
 				else {
